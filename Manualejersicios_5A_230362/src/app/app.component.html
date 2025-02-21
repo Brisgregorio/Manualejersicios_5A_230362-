@@ -1,0 +1,27 @@
+<h1 class="text-3x1 font-bold underline text-center mt-10">
+  Angular v19.1 + <span class="text-indigo-600">Tailwind CSS</span> 4.0
+  </h1>
+<br>
+  <div class="text-center">
+    <button mat-raised-button color=""primary>
+      Clik Me!
+    </button>
+  </div>
+
+  <mat-loolbar color="primary" class="sticky-toolbar">
+    <span class="text-x1 font-bold">Mi Plataforma 230362</span>
+    <span class="spaner"></span>
+
+    <nav>
+      <button mat-button>Ejercicios</button>
+      <button mat-button>Tareas</button>
+      <button mat-button>Examen Practico</button>
+      <button mat-button>Acerca de</button>
+    </nav>
+
+    <!-- Imagen de usuario con menú -->
+  <button mat-icon-button [matMenuTriggerFor]="menu">
+    <img src="assets/user.jpg" class="user-avatar" alt="Usuario">
+  </button>
+  <mat-menu #menu="matMenu"></mat-menu>
+</mat-toolbar>
