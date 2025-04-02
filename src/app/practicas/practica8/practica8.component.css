@@ -1,0 +1,35 @@
+app-practica8-aux {
+    display: inline-block;
+    padding: 12px 20px;
+    color: #000000;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 10px;
+   
+    text-align: center;
+  
+    transition: transform 0.3s ease, background-color 0.3s ease;
+  }
+  
+  app-practica8-aux:hover {
+    transform: translateY(-5px); 
+  }
+  
+  app-practica8-aux::before {
+    content: "👨‍💻"; 
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  
+  app-practica8-aux .occupation {
+    font-size: 1rem;
+    color: #d1d1d1;
+    font-weight: normal;
+  }
+  
+  app-practica8-aux .name {
+    font-size: 1.3rem;
+    color: #fff;
+    font-weight: bold;
+  }
+  

@@ -1,0 +1,11 @@
+<div class="server-status">
+    @if (isServerRunning) {
+        <span class="server-running">Yes, the server is running</span>
+    }
+    @else if (!isServerRunning) {
+        <span class="server-not-running">No, the server is not running</span>
+    }
+    @else {
+        <p class="server-sleeping">Ohh, no! Server is sleeping</p>
+    }
+</div>

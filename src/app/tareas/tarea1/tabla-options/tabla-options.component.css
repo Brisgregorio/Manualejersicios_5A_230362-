@@ -1,0 +1,25 @@
+/* Estilo para las imágenes en las celdas */
+#gatosTable td img {
+  max-width: 80px; /* Ajusta el tamaño de las imágenes */
+  border-radius: 5px;
+  display: block; /* Asegura que las imágenes no rompan la alineación */
+  margin: auto; /* Centra las imágenes en la celda */
+}
+
+
+
+/* Evitar estilos de sticky no deseados */
+#gatosTable {
+  border-collapse: collapse; /* Asegura bordes consistentes */
+  
+}
+
+.container{
+   max-height: 400px; /* Altura máxima para la tabla */
+  overflow-y: auto; /* Scroll vertical */
+  overflow-x: hidden; /* Evitar scroll horizontal */
+  border: 1px solid #ddd; /* Borde del contenedor */
+  border-radius: 10px; /* Bordes redondeados */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra elegante */
+  margin: 20px auto;
+}

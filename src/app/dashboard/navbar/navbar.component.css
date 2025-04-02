@@ -1,0 +1,21 @@
+img {
+    display: block; 
+    width: 40px;
+    height: 40px;
+  }
+  
+  .group:hover .absolute {
+    pointer-events: auto; 
+}
+
+
+/* Asegura que los enlaces y botones tengan el cursor adecuado */
+button, a {
+  cursor: pointer;
+}
+
+/* Asegura que no haya foco de texto (evita que parezca editable) */
+button:focus, a:focus {
+  outline: none;
+}
+

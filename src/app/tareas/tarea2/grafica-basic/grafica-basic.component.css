@@ -1,0 +1,11 @@
+.chart-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    padding: 10px;
+  }
+  
+  .chart-container {
+    min-width: 700px;
+    height: 400px;
+  }
+  

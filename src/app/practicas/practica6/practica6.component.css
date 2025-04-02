@@ -1,0 +1,27 @@
+
+div[contentEditable="true"] {
+  background-color: #f9f9f9; 
+  border: 2px solid #dcdcdc;  
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 1rem;
+  color: #333;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+div[contentEditable="false"] {
+  background-color: #fff; 
+  border: 2px solid #e0e0e0; 
+  color: #888; 
+}
+
+
+div[contentEditable="true"]:focus {
+  background-color: #f8e6ff; 
+  border-color: #653da0; 
+  outline: none;
+}
+
+div[contentEditable="true"]:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

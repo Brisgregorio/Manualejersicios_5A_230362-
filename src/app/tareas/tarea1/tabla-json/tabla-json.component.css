@@ -1,0 +1,42 @@
+#gatosTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px auto;
+    background: #fcf5ff; /* Fondo suave lavanda */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para elegancia */
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  #gatosTable thead {
+    background-color: #8a2be2; /* Un morado elegante */
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  
+  #gatosTable th, #gatosTable td {
+    text-align: left;
+    padding: 10px;
+    border: 1px solid #eaeaea;
+  }
+  
+  #gatosTable tbody tr:nth-child(even) {
+    background-color: #f3e5f5; /* Un tono suave de morado para filas pares */
+  }
+  
+  #gatosTable tbody tr:hover {
+    background-color: #d8bfd8; /* Un morado claro para hover */
+  }
+  
+  #gatosTable td img {
+    max-width: 80px; /* Ajusta el tamaño de las imágenes */
+    border-radius: 5px;
+  }
+  
+  #gatosTable th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  

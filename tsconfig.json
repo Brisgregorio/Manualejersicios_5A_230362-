@@ -1,0 +1,30 @@
+/* Typescript Configuration File */
+/* Learn more: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html */
+/* Learn about Angular Compiler Options: https://angular.dev/reference/configs/angular-compiler-options */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node", "jquery", "datatables.net"],
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "importHelpers": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

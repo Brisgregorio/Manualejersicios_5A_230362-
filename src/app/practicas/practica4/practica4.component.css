@@ -1,0 +1,14 @@
+.server-running {
+    color: green;
+    font-weight: bold;
+}
+
+.server-not-running {
+    color: red;
+    font-weight: bold;
+}
+
+.server-sleeping {
+    color: orange;
+    font-weight: bold;
+}

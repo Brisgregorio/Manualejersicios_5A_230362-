@@ -1,0 +1,51 @@
+div {
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: 10px;
+   
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    color: #4A90E2;  
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  article {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.7;
+    font-size: 1rem;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+  
+  article p {
+    margin-bottom: 10px;
+    text-align: justify;
+    text-indent: 10px;
+  }
+  
+  @defer {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #F39C12;  
+  }
+  
+  @placeholder {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #BDC3C7;  
+  }
+  
+  @loading {
+    text-align: center;
+    font-size: 1rem;
+    color: #E74C3C; 
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  

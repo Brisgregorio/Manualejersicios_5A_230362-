@@ -1,0 +1,11 @@
+<div class="operating-systems">
+  @for (os of operatingSystems; track os.id) {
+    {{ os.name }}
+  }
+</div>
+<div class="users">
+  @for (user of users; track user.id) {
+    <p>{{ user.name }}</p>
+  }
+</div>
+  
