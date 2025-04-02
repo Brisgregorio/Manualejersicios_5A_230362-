@@ -24,7 +24,6 @@ export class NavbarComponent {
     { nombre: 'Práctica 10', link: '/practica10', ejercicio:'Vistas Diferibles en Angular', objetivo:'Cargar componentes de manera diferida para mejorar el rendimiento de la aplicación.', descripcion:'Las vistas diferibles permiten cargar componentes solo cuando son necesarios, usando el decorador @defer. Esto optimiza la carga inicial de la aplicación. Se puede agregar un marcador de posición con @placeholder, mostrar un mensaje de carga con @loading, y activar la carga solo cuando el componente entra en la vista del usuario con @defer (on viewport). Esta técnica reduce el tiempo de carga y mejora el rendimiento.', unidad:'Unidad 2', mostrarDescripcion: false },
     { nombre: 'Práctica 11', link: '/practica11', ejercicio:'Optimización de Imágenes en Angular.', objetivo:'Mejorar la carga eficiente de imágenes en Angular.', descripcion:'La directiva NgOptimizedImage optimiza las imágenes al usar ngSrc en lugar de src, y requiere los atributos width y height para evitar desplazamientos en el diseño. Permite priorizar imágenes con priority y usar cargadores de imágenes para URLs optimizadas.', unidad:'Unidad 2', mostrarDescripcion: false },
     { nombre: 'Práctica 12', link: '/practica12', ejercicio:'Habilitación del Enrutamiento', objetivo:'Configurar el enrutamiento en Angular para habilitar la navegación entre vistas.', descripcion:'El enrutamiento en Angular permite navegar entre distintas vistas. Se configura mediante un archivo de rutas (app.routes.ts), se registra en la aplicación (app.config.ts), y se utiliza <router-outlet /> en la plantilla para mostrar el contenido de las rutas seleccionadas.', unidad:'Unidad 2', mostrarDescripcion: false },
-    
   ];
   tareas=[
     { nombre: 'Tabla basica', link: '/tabla-basic', ejercicio:'Tabla basica', objetivo:'Implementar una tabla simple con DataTables para visualizar datos estáticos en una estructura tabular.', descripcion:' Se crea una tabla HTML con DataTables para mejorar la presentación y organización de datos. No usa AJAX ni JSON, los datos están incrustados directamente en el HTML.', unidad:'Unidad 2', mostrarDescripcion: false }, 
@@ -36,17 +35,12 @@ export class NavbarComponent {
     { nombre: 'Grafica JSON', link: '/grafica-json', ejercicio:'Grafica JSON', objetivo:'Cargar datos en una gráfica de amCharts desde un archivo JSON externo.', descripcion:'Se obtiene información desde un archivo JSON mediante fetch() y se usa para renderizar la gráfica dinámicamente.', unidad:'Unidad 2', mostrarDescripcion: false },
     { nombre: 'Grafica AJAX', link: '/grafica-ajax', ejercicio:'Grafica AJAX', objetivo:'Obtener datos en tiempo real desde una API para generar una gráfica interactiva.', descripcion:'Se utiliza fetch() o AJAX para consultar una API y actualizar la gráfica en tiempo real sin necesidad de recargar la página.', unidad:'Unidad 2', mostrarDescripcion: false },
   ]
-  
   constructor(private sidebarService: SidebarService, private router: Router) {}
-
   mostrarSidebar(practica: any): void {
     this.sidebarService.setSidebarState(true, practica);
   }
   navbarVisible: boolean = true;  
-
   cerrarSesion() {
     this.navbarVisible = true;
-    
-
   }
 }
