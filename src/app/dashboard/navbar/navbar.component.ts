@@ -4,9 +4,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
-
-
-
 @Component({
   selector: 'app-navbar',
   imports:[CommonModule,RouterModule],
@@ -14,8 +11,6 @@ import { Router } from '@angular/router';
   styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
-
-
   practicas = [
     { nombre: 'Práctica 1', link: '/practica1', ejercicio:'Anatomía de un componente.', objetivo:'Actualizar la plantilla y los estilos de un componente en Angular.', descripcion:'Se aprende a modificar la plantilla HTML y los estilos CSS de un componente en Angular, cambiando el mensaje mostrado y el color del texto.', unidad:'Unidad 2', mostrarDescripcion: false },
     { nombre: 'Práctica 2', link: '/practica2', ejercicio:'Actualización del componente.', objetivo:'Aprender a actualizar la clase de un componente y utilizar la interpolación en Angular.', descripcion:'En este ejercicio, se agrega una propiedad city a la clase de un componente y se utiliza la interpolación para mostrar su valor en la plantilla. También se practica la interpolación con expresiones, como {{ 1 + 1 }}.', unidad:'Unidad 2', mostrarDescripcion: false },
