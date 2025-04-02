@@ -1,18 +1,26 @@
 import {
+  curveMonotoneXTension,
+  curveMonotoneYTension
+} from "./chunk-GR246QHG.js";
+import {
   Circle,
+  LinearGradient
+} from "./chunk-KH4K4VOZ.js";
+import {
+  Slice
+} from "./chunk-3BAVFK2D.js";
+import {
   ColorSet,
   Container,
   DEGREES,
   Graphics,
   Label,
-  LinearGradient,
   ListTemplate,
   Percent,
   RADIANS,
   RadialLabel,
   RoundedRectangle,
   Series,
-  Slice,
   area_default,
   cos,
   cubic,
@@ -31,13 +39,13 @@ import {
   setColor,
   sin,
   tan
-} from "./chunk-JLBSCWHK.js";
+} from "./chunk-ITFRVYQR.js";
 import {
   Template,
   Theme,
   each,
   isNumber
-} from "./chunk-UQME3NJK.js";
+} from "./chunk-EYNLZTNF.js";
 import {
   __awaiter
 } from "./chunk-GJBOBNGN.js";
@@ -664,13 +672,13 @@ var Flow = class extends Series {
         const link2 = dataItem.get("link");
         const sprite2 = bullet.get("sprite");
         if (sprite2) {
-          const point8 = link2.getPoint(this._getBulletLocation(bullet));
+          const point6 = link2.getPoint(this._getBulletLocation(bullet));
           sprite2.setAll({
-            x: point8.x,
-            y: point8.y
+            x: point6.x,
+            y: point6.y
           });
           if (bullet.get("autoRotate")) {
-            sprite2.set("rotation", point8.angle + bullet.get("autoRotateAngle", 0));
+            sprite2.set("rotation", point6.angle + bullet.get("autoRotateAngle", 0));
           }
         }
       }
@@ -4729,7 +4737,7 @@ function locale_default(locale3) {
   var group3 = locale3.grouping === void 0 || locale3.thousands === void 0 ? identity_default2 : formatGroup_default(map3.call(locale3.grouping, Number), locale3.thousands + ""), currencyPrefix = locale3.currency === void 0 ? "" : locale3.currency[0] + "", currencySuffix = locale3.currency === void 0 ? "" : locale3.currency[1] + "", decimal = locale3.decimal === void 0 ? "." : locale3.decimal + "", numerals = locale3.numerals === void 0 ? identity_default2 : formatNumerals_default(map3.call(locale3.numerals, String)), percent2 = locale3.percent === void 0 ? "%" : locale3.percent + "", minus = locale3.minus === void 0 ? "−" : locale3.minus + "", nan = locale3.nan === void 0 ? "NaN" : locale3.nan + "";
   function newFormat(specifier) {
     specifier = formatSpecifier(specifier);
-    var fill = specifier.fill, align = specifier.align, sign5 = specifier.sign, symbol = specifier.symbol, zero3 = specifier.zero, width = specifier.width, comma = specifier.comma, precision = specifier.precision, trim = specifier.trim, type2 = specifier.type;
+    var fill = specifier.fill, align = specifier.align, sign3 = specifier.sign, symbol = specifier.symbol, zero3 = specifier.zero, width = specifier.width, comma = specifier.comma, precision = specifier.precision, trim = specifier.trim, type2 = specifier.type;
     if (type2 === "n") comma = true, type2 = "g";
     else if (!formatTypes_default[type2]) precision === void 0 && (precision = 12), trim = true, type2 = "g";
     if (zero3 || fill === "0" && align === "=") zero3 = true, fill = "0", align = "=";
@@ -4746,9 +4754,9 @@ function locale_default(locale3) {
         var valueNegative = value2 < 0 || 1 / value2 < 0;
         value2 = isNaN(value2) ? nan : formatType(Math.abs(value2), precision);
         if (trim) value2 = formatTrim_default(value2);
-        if (valueNegative && +value2 === 0 && sign5 !== "+") valueNegative = false;
-        valuePrefix = (valueNegative ? sign5 === "(" ? sign5 : minus : sign5 === "-" || sign5 === "(" ? "" : sign5) + valuePrefix;
-        valueSuffix = (type2 === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign5 === "(" ? ")" : "");
+        if (valueNegative && +value2 === 0 && sign3 !== "+") valueNegative = false;
+        valuePrefix = (valueNegative ? sign3 === "(" ? sign3 : minus : sign3 === "-" || sign3 === "(" ? "" : sign3) + valuePrefix;
+        valueSuffix = (type2 === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign3 === "(" ? ")" : "");
         if (maybeSuffix) {
           i = -1, n = value2.length;
           while (++i < n) {
@@ -4897,8 +4905,8 @@ function pointEqual_default(a2, b) {
 }
 
 // node_modules/d3-geo/src/clip/rejoin.js
-function Intersection(point8, points, other, entry) {
-  this.x = point8;
+function Intersection(point6, points, other, entry) {
+  this.x = point6;
   this.z = points;
   this.o = other;
   this.e = entry;
@@ -4931,7 +4939,7 @@ function rejoin_default(segments, compareIntersection2, startInside, interpolate
   for (i = 0, n = clip.length; i < n; ++i) {
     clip[i].e = startInside = !startInside;
   }
-  var start2 = subject[0], points, point8;
+  var start2 = subject[0], points, point6;
   while (1) {
     var current = start2, isSubject = true;
     while (current.v) if ((current = current.n) === start2) return;
@@ -4941,7 +4949,7 @@ function rejoin_default(segments, compareIntersection2, startInside, interpolate
       current.v = current.o.v = true;
       if (current.e) {
         if (isSubject) {
-          for (i = 0, n = points.length; i < n; ++i) stream.point((point8 = points[i])[0], point8[1]);
+          for (i = 0, n = points.length; i < n; ++i) stream.point((point6 = points[i])[0], point6[1]);
         } else {
           interpolate(current.x, current.n.x, 1, stream);
         }
@@ -4949,7 +4957,7 @@ function rejoin_default(segments, compareIntersection2, startInside, interpolate
       } else {
         if (isSubject) {
           points = current.p.z;
-          for (i = points.length - 1; i >= 0; --i) stream.point((point8 = points[i])[0], point8[1]);
+          for (i = points.length - 1; i >= 0; --i) stream.point((point6 = points[i])[0], point6[1]);
         } else {
           interpolate(current.x, current.p.x, -1, stream);
         }
@@ -4975,11 +4983,11 @@ function link(array5) {
 }
 
 // node_modules/d3-geo/src/polygonContains.js
-function longitude(point8) {
-  return abs3(point8[0]) <= pi3 ? point8[0] : sign(point8[0]) * ((abs3(point8[0]) + pi3) % tau4 - pi3);
+function longitude(point6) {
+  return abs3(point6[0]) <= pi3 ? point6[0] : sign(point6[0]) * ((abs3(point6[0]) + pi3) % tau4 - pi3);
 }
-function polygonContains_default(polygon, point8) {
-  var lambda = longitude(point8), phi2 = point8[1], sinPhi = sin3(phi2), normal = [sin3(lambda), -cos3(lambda), 0], angle = 0, winding = 0;
+function polygonContains_default(polygon, point6) {
+  var lambda = longitude(point6), phi2 = point6[1], sinPhi = sin3(phi2), normal = [sin3(lambda), -cos3(lambda), 0], angle = 0, winding = 0;
   var sum5 = new Adder();
   if (sinPhi === 1) phi2 = halfPi3 + epsilon4;
   else if (sinPhi === -1) phi2 = -halfPi3 - epsilon4;
@@ -4987,9 +4995,9 @@ function polygonContains_default(polygon, point8) {
     if (!(m = (ring = polygon[i]).length)) continue;
     var ring, m, point0 = ring[m - 1], lambda0 = longitude(point0), phi0 = point0[1] / 2 + quarterPi, sinPhi0 = sin3(phi0), cosPhi0 = cos3(phi0);
     for (var j = 0; j < m; ++j, lambda0 = lambda1, sinPhi0 = sinPhi1, cosPhi0 = cosPhi1, point0 = point1) {
-      var point1 = ring[j], lambda1 = longitude(point1), phi1 = point1[1] / 2 + quarterPi, sinPhi1 = sin3(phi1), cosPhi1 = cos3(phi1), delta = lambda1 - lambda0, sign5 = delta >= 0 ? 1 : -1, absDelta = sign5 * delta, antimeridian = absDelta > pi3, k2 = sinPhi0 * sinPhi1;
-      sum5.add(atan2(k2 * sign5 * sin3(absDelta), cosPhi0 * cosPhi1 + k2 * cos3(absDelta)));
-      angle += antimeridian ? delta + sign5 * tau4 : delta;
+      var point1 = ring[j], lambda1 = longitude(point1), phi1 = point1[1] / 2 + quarterPi, sinPhi1 = sin3(phi1), cosPhi1 = cos3(phi1), delta = lambda1 - lambda0, sign3 = delta >= 0 ? 1 : -1, absDelta = sign3 * delta, antimeridian = absDelta > pi3, k2 = sinPhi0 * sinPhi1;
+      sum5.add(atan2(k2 * sign3 * sin3(absDelta), cosPhi0 * cosPhi1 + k2 * cos3(absDelta)));
+      angle += antimeridian ? delta + sign3 * tau4 : delta;
       if (antimeridian ^ lambda0 >= lambda ^ lambda1 >= lambda) {
         var arc = cartesianCross(cartesian(point0), cartesian(point1));
         cartesianNormalizeInPlace(arc);
@@ -5010,7 +5018,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
   return function(sink) {
     var line = clipLine(sink), ringBuffer = buffer_default2(), ringSink = clipLine(ringBuffer), polygonStarted = false, polygon, segments, ring;
     var clip = {
-      point: point8,
+      point: point6,
       lineStart,
       lineEnd,
       polygonStart: function() {
@@ -5021,7 +5029,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
         polygon = [];
       },
       polygonEnd: function() {
-        clip.point = point8;
+        clip.point = point6;
         clip.lineStart = lineStart;
         clip.lineEnd = lineEnd;
         segments = merge(segments);
@@ -5046,7 +5054,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
         sink.polygonEnd();
       }
     };
-    function point8(lambda, phi2) {
+    function point6(lambda, phi2) {
       if (pointVisible(lambda, phi2)) sink.point(lambda, phi2);
     }
     function pointLine(lambda, phi2) {
@@ -5057,7 +5065,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
       line.lineStart();
     }
     function lineEnd() {
-      clip.point = point8;
+      clip.point = point6;
       line.lineEnd();
     }
     function pointRing(lambda, phi2) {
@@ -5071,7 +5079,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
     function ringEnd() {
       pointRing(ring[0][0], ring[0][1]);
       ringSink.lineEnd();
-      var clean = ringSink.clean(), ringSegments = ringBuffer.result(), i, n = ringSegments.length, m, segment, point9;
+      var clean = ringSink.clean(), ringSegments = ringBuffer.result(), i, n = ringSegments.length, m, segment, point7;
       ring.pop();
       polygon.push(ring);
       ring = null;
@@ -5081,7 +5089,7 @@ function clip_default(pointVisible, clipLine, interpolate, start2) {
         if ((m = segment.length - 1) > 0) {
           if (!polygonStarted) sink.polygonStart(), polygonStarted = true;
           sink.lineStart();
-          for (i = 0; i < m; ++i) sink.point((point9 = segment[i])[0], point9[1]);
+          for (i = 0; i < m; ++i) sink.point((point7 = segment[i])[0], point7[1]);
           sink.lineEnd();
         }
         return;
@@ -5911,9 +5919,9 @@ var binomial_default = function sourceRandomBinomial(source) {
           pp /= y3;
         }
       }
-      var sign5 = pp < 0.5, pFinal = sign5 ? pp : 1 - pp, g = G(pFinal);
+      var sign3 = pp < 0.5, pFinal = sign3 ? pp : 1 - pp, g = G(pFinal);
       for (var s2 = g(), k2 = 0; s2 <= nn; ++k2) s2 += g();
-      return acc + (sign5 ? k2 : nn - k2);
+      return acc + (sign3 ? k2 : nn - k2);
     };
   }
   randomBinomial.source = sourceRandomBinomial;
@@ -6621,8 +6629,8 @@ var numberRe = /^\s*\d+/;
 var percentRe = /^%/;
 var requoteRe = /[\\^$*+?|[\]().{}]/g;
 function pad2(value2, fill, width) {
-  var sign5 = value2 < 0 ? "-" : "", string = (sign5 ? -value2 : value2) + "", length = string.length;
-  return sign5 + (length < width ? new Array(width - length + 1).join(fill) + string : string);
+  var sign3 = value2 < 0 ? "-" : "", string = (sign3 ? -value2 : value2) + "", length = string.length;
+  return sign3 + (length < width ? new Array(width - length + 1).join(fill) + string : string);
 }
 function requote(s2) {
   return s2.replace(requoteRe, "\\$&");
@@ -7085,8 +7093,8 @@ Transform.prototype = {
   translate: function(x3, y3) {
     return x3 === 0 & y3 === 0 ? this : new Transform(this.k, this.x + this.k * x3, this.y + this.k * y3);
   },
-  apply: function(point8) {
-    return [point8[0] * this.k + this.x, point8[1] * this.k + this.y];
+  apply: function(point6) {
+    return [point6[0] * this.k + this.x, point6[1] * this.k + this.y];
   },
   applyX: function(x3) {
     return x3 * this.k + this.x;
@@ -7537,21 +7545,21 @@ var ChordNodes = class extends FlowNodes {
     node.children.push(label);
     dataItem.set("label", label);
     node.events.on("dragstart", (e) => {
-      let point8 = this.toLocal(e.point);
+      let point6 = this.toLocal(e.point);
       const angle = getAngle({
         x: 0,
         y: 0
-      }, point8);
+      }, point6);
       if (this.flow) {
         this._dAngle = this.flow.get("startAngle", 0) - angle;
       }
     });
     node.events.on("dragged", (e) => {
-      let point8 = this.toLocal(e.point);
+      let point6 = this.toLocal(e.point);
       const angle = getAngle({
         x: 0,
         y: 0
-      }, point8);
+      }, point6);
       node.setAll({
         x: 0,
         y: 0
@@ -8469,276 +8477,6 @@ Object.defineProperty(SankeyLink, "classNames", {
   value: FlowLink.classNames.concat([SankeyLink.className])
 });
 
-// node_modules/@amcharts/amcharts5/.internal/core/render/MonotoneXTension.js
-var MonotoneXTension = class {
-  constructor(context, tension) {
-    Object.defineProperty(this, "_line", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_point", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_context", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: void 0
-    });
-    Object.defineProperty(this, "_x0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_x1", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_y0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_y1", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_t0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_tension", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    this._context = context;
-    this._tension = tension;
-  }
-  areaStart() {
-    this._line = 0;
-  }
-  areaEnd() {
-    this._line = NaN;
-  }
-  lineStart() {
-    this._x0 = this._x1 = this._y0 = this._y1 = this._t0 = NaN;
-    this._point = 0;
-  }
-  lineEnd() {
-    switch (this._point) {
-      case 2:
-        this._context.lineTo(this._x1, this._y1);
-        break;
-      case 3:
-        point2(this, this._t0, slope2(this, this._t0));
-        break;
-    }
-    if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
-    this._line = 1 - this._line;
-  }
-  point(x3, y3) {
-    let t13 = NaN;
-    x3 = +x3, y3 = +y3;
-    if (x3 === this._x1 && y3 === this._y1) return;
-    switch (this._point) {
-      case 0:
-        this._point = 1;
-        this._line ? this._context.lineTo(x3, y3) : this._context.moveTo(x3, y3);
-        break;
-      case 1:
-        this._point = 2;
-        break;
-      case 2:
-        this._point = 3;
-        point2(this, slope2(this, t13 = slope3(this, x3, y3)), t13);
-        break;
-      default:
-        point2(this, this._t0, t13 = slope3(this, x3, y3));
-        break;
-    }
-    this._x0 = this._x1, this._x1 = x3;
-    this._y0 = this._y1, this._y1 = y3;
-    this._t0 = t13;
-  }
-};
-function curveMonotoneXTension(tension) {
-  function monotoneXTension(context) {
-    return new MonotoneXTension(context, tension);
-  }
-  return monotoneXTension;
-}
-function sign2(x3) {
-  return x3 < 0 ? -1 : 1;
-}
-function slope3(that, x22, y22) {
-  let h0 = that._x1 - that._x0;
-  let h1 = x22 - that._x1;
-  let s0 = (that._y1 - that._y0) / (h0 || h1 < 0 && -0);
-  let s1 = (y22 - that._y1) / (h1 || h0 < 0 && -0);
-  let p = (s0 * h1 + s1 * h0) / (h0 + h1);
-  return (sign2(s0) + sign2(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
-}
-function slope2(that, t) {
-  let h = that._x1 - that._x0;
-  return h ? (3 * (that._y1 - that._y0) / h - t) / 2 : t;
-}
-function point2(that, t03, t13) {
-  let x02 = that._x0, y0 = that._y0, x12 = that._x1, y1 = that._y1, dx = (x12 - x02) / 1.5 * (1 - that._tension);
-  that._context.bezierCurveTo(x02 + dx, y0 + dx * t03, x12 - dx, y1 - dx * t13, x12, y1);
-}
-
-// node_modules/@amcharts/amcharts5/.internal/core/render/MonotoneYTension.js
-var MonotoneYTension = class {
-  constructor(context, tension) {
-    Object.defineProperty(this, "_line", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_point", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_context", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: void 0
-    });
-    Object.defineProperty(this, "_x0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_x1", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_y0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_y1", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_t0", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    Object.defineProperty(this, "_tension", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: 0
-    });
-    this._context = context;
-    this._tension = tension;
-  }
-  areaStart() {
-    this._line = 0;
-  }
-  areaEnd() {
-    this._line = NaN;
-  }
-  lineStart() {
-    this._x0 = this._x1 = this._y0 = this._y1 = this._t0 = NaN;
-    this._point = 0;
-  }
-  lineEnd() {
-    switch (this._point) {
-      case 2:
-        this._context.lineTo(this._x1, this._y1);
-        break;
-      case 3:
-        point3(this, this._t0, slope22(this, this._t0));
-        break;
-    }
-    if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
-    this._line = 1 - this._line;
-  }
-  point(x3, y3) {
-    [x3, y3] = [y3, x3];
-    let t13 = NaN;
-    x3 = +x3, y3 = +y3;
-    if (x3 === this._x1 && y3 === this._y1) return;
-    switch (this._point) {
-      case 0:
-        this._point = 1;
-        this._line ? this._context.lineTo(y3, x3) : this._context.moveTo(y3, x3);
-        break;
-      case 1:
-        this._point = 2;
-        break;
-      case 2:
-        this._point = 3;
-        point3(this, slope22(this, t13 = slope32(this, x3, y3)), t13);
-        break;
-      default:
-        point3(this, this._t0, t13 = slope32(this, x3, y3));
-        break;
-    }
-    this._x0 = this._x1, this._x1 = x3;
-    this._y0 = this._y1, this._y1 = y3;
-    this._t0 = t13;
-  }
-};
-function curveMonotoneYTension(tension) {
-  function monotoneYTension(context) {
-    return new MonotoneYTension(context, tension);
-  }
-  monotoneYTension.tension = function(tension2) {
-    return curveMonotoneYTension(+tension2);
-  };
-  return monotoneYTension;
-}
-function sign3(x3) {
-  return x3 < 0 ? -1 : 1;
-}
-function slope32(that, x22, y22) {
-  let h0 = that._x1 - that._x0;
-  let h1 = x22 - that._x1;
-  let s0 = (that._y1 - that._y0) / (h0 || h1 < 0 && -0);
-  let s1 = (y22 - that._y1) / (h1 || h0 < 0 && -0);
-  let p = (s0 * h1 + s1 * h0) / (h0 + h1);
-  return (sign3(s0) + sign3(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
-}
-function slope22(that, t) {
-  let h = that._x1 - that._x0;
-  return h ? (3 * (that._y1 - that._y0) / h - t) / 2 : t;
-}
-function point3(that, t03, t13) {
-  let x02 = that._x0, y0 = that._y0, x12 = that._x1, y1 = that._y1, dx = (x12 - x02) / 1.5 * (1 - that._tension);
-  that._context.bezierCurveTo(y0 + dx * t03, x02 + dx, y1 - dx * t13, x12 - dx, y1, x12);
-}
-
 // node_modules/d3-sankey/node_modules/d3-array/src/ascending.js
 function ascending_default2(a2, b) {
   return a2 < b ? -1 : a2 > b ? 1 : a2 >= b ? 0 : NaN;
@@ -9459,7 +9197,7 @@ function noop_default2() {
 }
 
 // node_modules/d3-sankey/node_modules/d3-shape/src/curve/basis.js
-function point4(that, x3, y3) {
+function point2(that, x3, y3) {
   that._context.bezierCurveTo((2 * that._x0 + that._x1) / 3, (2 * that._y0 + that._y1) / 3, (that._x0 + 2 * that._x1) / 3, (that._y0 + 2 * that._y1) / 3, (that._x0 + 4 * that._x1 + x3) / 6, (that._y0 + 4 * that._y1 + y3) / 6);
 }
 function Basis(context) {
@@ -9479,7 +9217,7 @@ Basis.prototype = {
   lineEnd: function() {
     switch (this._point) {
       case 3:
-        point4(this, this._x1, this._y1);
+        point2(this, this._x1, this._y1);
       // proceed
       case 2:
         this._context.lineTo(this._x1, this._y1);
@@ -9503,7 +9241,7 @@ Basis.prototype = {
         this._context.lineTo((5 * this._x0 + this._x1) / 6, (5 * this._y0 + this._y1) / 6);
       // proceed
       default:
-        point4(this, x3, y3);
+        point2(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = x3;
@@ -9560,7 +9298,7 @@ BasisClosed.prototype = {
         this._context.moveTo((this._x0 + 4 * this._x1 + x3) / 6, (this._y0 + 4 * this._y1 + y3) / 6);
         break;
       default:
-        point4(this, x3, y3);
+        point2(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = x3;
@@ -9605,7 +9343,7 @@ BasisOpen.prototype = {
         this._point = 4;
       // proceed
       default:
-        point4(this, x3, y3);
+        point2(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = x3;
@@ -9652,7 +9390,7 @@ var bundle_default = function custom12(beta) {
 }(0.85);
 
 // node_modules/d3-sankey/node_modules/d3-shape/src/curve/cardinal.js
-function point5(that, x3, y3) {
+function point3(that, x3, y3) {
   that._context.bezierCurveTo(that._x1 + that._k * (that._x2 - that._x0), that._y1 + that._k * (that._y2 - that._y0), that._x2 + that._k * (that._x1 - x3), that._y2 + that._k * (that._y1 - y3), that._x2, that._y2);
 }
 function Cardinal(context, tension) {
@@ -9676,7 +9414,7 @@ Cardinal.prototype = {
         this._context.lineTo(this._x2, this._y2);
         break;
       case 3:
-        point5(this, this._x1, this._y1);
+        point3(this, this._x1, this._y1);
         break;
     }
     if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
@@ -9697,7 +9435,7 @@ Cardinal.prototype = {
         this._point = 3;
       // proceed
       default:
-        point5(this, x3, y3);
+        point3(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = this._x2, this._x2 = x3;
@@ -9762,7 +9500,7 @@ CardinalClosed.prototype = {
         this._x5 = x3, this._y5 = y3;
         break;
       default:
-        point5(this, x3, y3);
+        point3(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = this._x2, this._x2 = x3;
@@ -9816,7 +9554,7 @@ CardinalOpen.prototype = {
         this._point = 4;
       // proceed
       default:
-        point5(this, x3, y3);
+        point3(this, x3, y3);
         break;
     }
     this._x0 = this._x1, this._x1 = this._x2, this._x2 = x3;
@@ -9834,7 +9572,7 @@ var cardinalOpen_default = function custom15(tension) {
 }(0);
 
 // node_modules/d3-sankey/node_modules/d3-shape/src/curve/catmullRom.js
-function point6(that, x3, y3) {
+function point4(that, x3, y3) {
   var x12 = that._x1, y1 = that._y1, x22 = that._x2, y22 = that._y2;
   if (that._l01_a > epsilon6) {
     var a2 = 2 * that._l01_2a + 3 * that._l01_a * that._l12_a + that._l12_2a, n = 3 * that._l01_a * (that._l01_a + that._l12_a);
@@ -9893,7 +9631,7 @@ CatmullRom.prototype = {
         this._point = 3;
       // proceed
       default:
-        point6(this, x3, y3);
+        point4(this, x3, y3);
         break;
     }
     this._l01_a = this._l12_a, this._l12_a = this._l23_a;
@@ -9964,7 +9702,7 @@ CatmullRomClosed.prototype = {
         this._x5 = x3, this._y5 = y3;
         break;
       default:
-        point6(this, x3, y3);
+        point4(this, x3, y3);
         break;
     }
     this._l01_a = this._l12_a, this._l12_a = this._l23_a;
@@ -10024,7 +9762,7 @@ CatmullRomOpen.prototype = {
         this._point = 4;
       // proceed
       default:
-        point6(this, x3, y3);
+        point4(this, x3, y3);
         break;
     }
     this._l01_a = this._l12_a, this._l12_a = this._l23_a;
@@ -10064,18 +9802,18 @@ LinearClosed.prototype = {
 };
 
 // node_modules/d3-sankey/node_modules/d3-shape/src/curve/monotone.js
-function sign4(x3) {
+function sign2(x3) {
   return x3 < 0 ? -1 : 1;
 }
-function slope33(that, x22, y22) {
+function slope3(that, x22, y22) {
   var h0 = that._x1 - that._x0, h1 = x22 - that._x1, s0 = (that._y1 - that._y0) / (h0 || h1 < 0 && -0), s1 = (y22 - that._y1) / (h1 || h0 < 0 && -0), p = (s0 * h1 + s1 * h0) / (h0 + h1);
-  return (sign4(s0) + sign4(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
+  return (sign2(s0) + sign2(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
 }
-function slope23(that, t) {
+function slope2(that, t) {
   var h = that._x1 - that._x0;
   return h ? (3 * (that._y1 - that._y0) / h - t) / 2 : t;
 }
-function point7(that, t03, t13) {
+function point5(that, t03, t13) {
   var x02 = that._x0, y0 = that._y0, x12 = that._x1, y1 = that._y1, dx = (x12 - x02) / 3;
   that._context.bezierCurveTo(x02 + dx, y0 + dx * t03, x12 - dx, y1 - dx * t13, x12, y1);
 }
@@ -10099,7 +9837,7 @@ MonotoneX.prototype = {
         this._context.lineTo(this._x1, this._y1);
         break;
       case 3:
-        point7(this, this._t0, slope23(this, this._t0));
+        point5(this, this._t0, slope2(this, this._t0));
         break;
     }
     if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
@@ -10119,10 +9857,10 @@ MonotoneX.prototype = {
         break;
       case 2:
         this._point = 3;
-        point7(this, slope23(this, t13 = slope33(this, x3, y3)), t13);
+        point5(this, slope2(this, t13 = slope3(this, x3, y3)), t13);
         break;
       default:
-        point7(this, this._t0, t13 = slope33(this, x3, y3));
+        point5(this, this._t0, t13 = slope3(this, x3, y3));
         break;
     }
     this._x0 = this._x1, this._x1 = x3;

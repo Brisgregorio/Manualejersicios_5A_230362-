@@ -49,18 +49,12 @@ export class NavbarComponent {
   mostrarSidebar(practica: any): void {
     this.sidebarService.setSidebarState(true, practica);
   }
-  mostrarNavbar = true;
   navbarVisible: boolean = true; // Controla la visibilidad del navbar
-  sidebarVisible: boolean = true; // Controla la visibilidad del sidebar
-  page1Visible: boolean = true;  // Controla la visibilidad del page1
+  
 
-  // Función para manejar el cierre de sesión
   cerrarSesion() {
-    // Ocultar el navbar, sidebar y page1
-    this.navbarVisible = false;
-    this.sidebarVisible = false;
-    this.page1Visible = false;
+    this.navbarVisible = true;
+    
 
-    // Aquí puedes agregar lógica para cerrar la sesión (por ejemplo, redirigir a la página de login)
   }
 }

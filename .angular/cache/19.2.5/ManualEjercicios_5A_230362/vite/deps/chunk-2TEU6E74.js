@@ -3093,356 +3093,6 @@ var options = {
   pixelPerfectPrecision: 0
 };
 
-// node_modules/@amcharts/amcharts4/.internal/core/utils/Animation.js
-function animate(duration, callback) {
-  var disposed = false;
-  var startTime = Date.now();
-  function loop(now2) {
-    if (!disposed) {
-      var diff = now2 - startTime;
-      if (diff >= duration) {
-        callback(1);
-      } else {
-        nextFrame(loop);
-        callback(diff / duration);
-      }
-    }
-  }
-  nextFrame(loop);
-  return new Disposer(function() {
-    disposed = true;
-  });
-}
-function getProgressNumber(progress, from, to) {
-  return from + (to - from) * progress;
-}
-function getProgressPercent(progress, from, to) {
-  return new Percent(getProgressNumber(progress, from.percent, to.percent));
-}
-function getProgressColor(progress, from, to) {
-  var color2 = new Color(interpolate(from.rgb, to.rgb, progress));
-  if (from.alpha != to.alpha) {
-    color2.alpha = from.alpha + (to.alpha - from.alpha) * progress;
-  }
-  return color2;
-}
-function getHybridProperty(property, type) {
-  return type + property.charAt(0).toUpperCase() + property.substr(1);
-}
-var AnimationDisposer = (
-  /** @class */
-  function() {
-    function AnimationDisposer2(array) {
-      this._disposer = new Disposer(function() {
-        while (array.length !== 0) {
-          array[0].dispose();
-        }
-      });
-    }
-    AnimationDisposer2.prototype.isDisposed = function() {
-      return this._disposer.isDisposed();
-    };
-    AnimationDisposer2.prototype.dispose = function() {
-      this._disposer.dispose();
-    };
-    return AnimationDisposer2;
-  }()
-);
-var Animation = (
-  /** @class */
-  function(_super) {
-    __extends(Animation2, _super);
-    function Animation2(object, animationOptions, duration, easing) {
-      var _this = (
-        // Init
-        _super.call(this) || this
-      );
-      _this.duration = 0;
-      _this.easing = linear;
-      _this.progress = 0;
-      _this._loop = 0;
-      _this._pause = false;
-      _this._delayTimeout = null;
-      _this._time = 0;
-      _this._isFinished = false;
-      _this.className = "Animation";
-      if (options.animationsEnabled === false) {
-        duration = 0;
-      }
-      _this.object = object;
-      _this.animationOptions = toArray(animationOptions);
-      _this.duration = duration;
-      if (easing) {
-        _this.easing = easing;
-      }
-      _this.applyTheme();
-      return _this;
-    }
-    Animation2.prototype.debug = function() {
-    };
-    Animation2.prototype.dispose = function() {
-      _super.prototype.dispose.call(this);
-      this.pause();
-    };
-    Animation2.prototype.delay = function(delay) {
-      var _this = this;
-      if (delay > 0) {
-        this.pause();
-        move(this.object.animations, this);
-        var id_1 = setTimeout(function() {
-          _this._delayTimeout = null;
-          _this.start();
-        }, delay);
-        this._delayTimeout = new Disposer(function() {
-          clearTimeout(id_1);
-        });
-      }
-      return this;
-    };
-    Animation2.prototype._start = function() {
-      this._isFinished = false;
-      if (this._delayTimeout) {
-        this.removeDispose(this._delayTimeout);
-        this._delayTimeout = null;
-      }
-      this.stopSameAnimations();
-      this._pause = false;
-      move(system.animations, this);
-      move(this.object.animations, this);
-      system.requestFrame();
-    };
-    Animation2.prototype.start = function() {
-      this._start();
-      this._startTime = Date.now();
-      this._time = 0;
-      this.staticOptions = [];
-      for (var i = this.animationOptions.length - 1; i >= 0; i--) {
-        var options_1 = this.animationOptions[i];
-        if (!hasValue(options_1.from)) {
-          if (options_1.childObject) {
-            options_1.from = options_1.childObject[options_1.property];
-          } else {
-            options_1.from = this.object[options_1.property];
-            if (!hasValue(options_1.from)) {
-              options_1.from = SVGDefaults[options_1.property];
-            }
-          }
-        }
-        if (options_1.from == options_1.to) {
-          remove(this.animationOptions, options_1);
-        } else if (!hasValue(options_1.from) || !(options_1.from instanceof Percent) && options_1.to instanceof Percent || options_1.from instanceof Percent && !(options_1.to instanceof Percent)) {
-          this.staticOptions.push(options_1);
-          remove(this.animationOptions, options_1);
-        } else {
-          if (isNumber(options_1.to)) {
-            options_1.updateMethod = getProgressNumber;
-            if (options_1.from instanceof Percent) {
-              var convertedFrom = this.object[getHybridProperty(options_1.property, "pixel")];
-              if (!isNaN(convertedFrom)) {
-                options_1.from = convertedFrom;
-              } else {
-                this.staticOptions.push(options_1);
-                remove(this.animationOptions, options_1);
-              }
-            } else if (isNaN(options_1.from)) {
-              this.staticOptions.push(options_1);
-              remove(this.animationOptions, options_1);
-            }
-          } else {
-            if (options_1.to instanceof Color) {
-              if (options_1.from) {
-                options_1.updateMethod = getProgressColor;
-              } else {
-                this.staticOptions.push(options_1);
-                remove(this.animationOptions, options_1);
-              }
-            } else if (options_1.to instanceof Percent) {
-              options_1.updateMethod = getProgressPercent;
-              if (!isNaN(options_1.from)) {
-                var convertedFrom = this.object[getHybridProperty(options_1.property, "relative")];
-                if (!isNaN(convertedFrom)) {
-                  options_1.from = percent(convertedFrom * 100);
-                }
-              }
-            } else {
-              this.staticOptions.push(options_1);
-              remove(this.animationOptions, options_1);
-            }
-          }
-        }
-      }
-      this.applyStaticOptions();
-      if (this.events.isEnabled("animationstarted")) {
-        var event_1 = {
-          type: "animationstarted",
-          target: this,
-          progress: this.progress
-        };
-        this.events.dispatchImmediately("animationstarted", event_1);
-      }
-      this.update();
-      if (this.duration === 0) {
-        this.end();
-      }
-      return this;
-    };
-    Animation2.prototype.loop = function(count) {
-      if (!isNumber(count)) {
-        count = Infinity;
-      }
-      this._loop = count;
-      return this;
-    };
-    Animation2.prototype.pause = function() {
-      this._pause = true;
-      if (this._delayTimeout) {
-        this.removeDispose(this._delayTimeout);
-        this._delayTimeout = null;
-      }
-      remove(system.animations, this);
-      remove(this.object.animations, this);
-      return this;
-    };
-    Animation2.prototype.resume = function() {
-      this._start();
-      this._startTime = Date.now() - this._time;
-      return this;
-    };
-    Animation2.prototype.end = function() {
-      if (this._loop == 0) {
-        this.pause();
-      }
-      this.setProgress(1);
-      this.applyStaticOptions();
-      if (this.events.isEnabled("animationended")) {
-        var event_2 = {
-          type: "animationended",
-          target: this,
-          progress: this.progress
-        };
-        this.events.dispatchImmediately("animationended", event_2);
-      }
-      if (this._loop > 0) {
-        this._loop--;
-        this.start();
-      } else {
-        this.stop();
-        this._isFinished = true;
-      }
-      return this;
-    };
-    Animation2.prototype.kill = function() {
-      this.pause();
-      this._isFinished = true;
-    };
-    Animation2.prototype.isFinished = function() {
-      return this._isFinished;
-    };
-    Animation2.prototype.applyStaticOptions = function() {
-      var _this = this;
-      each(this.staticOptions, function(options2) {
-        if (options2.childObject) {
-          options2.childObject[options2.property] = _this.progress == 1 ? options2.to : options2.from;
-        } else {
-          _this.object[options2.property] = _this.progress == 1 ? options2.to : options2.from;
-        }
-      });
-    };
-    Animation2.prototype.stop = function(skipEvent) {
-      this.pause();
-      if (!skipEvent) {
-        if (this.events.isEnabled("animationstopped")) {
-          var event_3 = {
-            type: "animationstopped",
-            target: this,
-            progress: this.progress
-          };
-          this.events.dispatchImmediately("animationstopped", event_3);
-        }
-      }
-      return this;
-    };
-    Animation2.prototype.setProgress = function(progress) {
-      var _this = this;
-      this._time = this.duration * progress;
-      each(this.animationOptions, function(options2) {
-        if (options2.updateMethod && hasValue(options2.from)) {
-          var value = options2.updateMethod(progress, options2.from, options2.to);
-          if (options2.childObject) {
-            options2.childObject[options2.property] = value;
-          } else {
-            _this.object[options2.property] = value;
-          }
-        }
-      });
-      this.progress = progress;
-      if (this.events.isEnabled("animationprogress")) {
-        var event_4 = {
-          type: "animationprogress",
-          target: this,
-          progress: this.progress
-        };
-        this.events.dispatchImmediately("animationprogress", event_4);
-      }
-      system.requestFrame();
-    };
-    Animation2.prototype.update = function() {
-      if (!this._pause) {
-        var progress = void 0;
-        this._time = fitToRange(Date.now() - this._startTime, 0, this.duration);
-        var timeProgress = this._time / this.duration;
-        progress = this.easing(timeProgress);
-        if (this.duration == 0 || !isNumber(progress) || timeProgress >= 1) {
-          progress = 1;
-        }
-        this.setProgress(progress);
-        if (round(this._time / this.duration, 6) == 1) {
-          this.end();
-        }
-      }
-      return this;
-    };
-    Object.defineProperty(Animation2.prototype, "delayed", {
-      /**
-       * Returns `true` if this animation is delayed.
-       *
-       * @readonly
-       * @return [description]
-       */
-      get: function() {
-        return this._delayTimeout ? true : false;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Animation2.prototype.stopSameAnimations = function() {
-      var _this = this;
-      each(copy(this.object.animations), function(animation) {
-        if (animation !== _this && !animation.delayed) {
-          var killed_1 = [];
-          each(_this.animationOptions, function(newOptions) {
-            each(animation.animationOptions, function(oldOptions) {
-              if (newOptions.property == oldOptions.property && newOptions.childObject == oldOptions.childObject) {
-                killed_1.push(oldOptions);
-                if (animation.animationOptions.length == 0) {
-                  animation.kill();
-                }
-              }
-            });
-          });
-          each(killed_1, function(oldOptions) {
-            remove(animation.animationOptions, oldOptions);
-          });
-        }
-      });
-    };
-    Animation2.prototype.asFunction = function(field) {
-      return field == "easing" || _super.prototype.asIs.call(this, field);
-    };
-    return Animation2;
-  }(BaseObjectEvents)
-);
-
 // node_modules/@amcharts/amcharts4/.internal/core/utils/DOM.js
 var SVGNS = "http://www.w3.org/2000/svg";
 var XMLNS = "http://www.w3.org/2000/xmlns/";
@@ -25494,6 +25144,356 @@ var System = (
 );
 var system = new System();
 
+// node_modules/@amcharts/amcharts4/.internal/core/utils/Animation.js
+function animate(duration, callback) {
+  var disposed = false;
+  var startTime = Date.now();
+  function loop(now2) {
+    if (!disposed) {
+      var diff = now2 - startTime;
+      if (diff >= duration) {
+        callback(1);
+      } else {
+        nextFrame(loop);
+        callback(diff / duration);
+      }
+    }
+  }
+  nextFrame(loop);
+  return new Disposer(function() {
+    disposed = true;
+  });
+}
+function getProgressNumber(progress, from, to) {
+  return from + (to - from) * progress;
+}
+function getProgressPercent(progress, from, to) {
+  return new Percent(getProgressNumber(progress, from.percent, to.percent));
+}
+function getProgressColor(progress, from, to) {
+  var color2 = new Color(interpolate(from.rgb, to.rgb, progress));
+  if (from.alpha != to.alpha) {
+    color2.alpha = from.alpha + (to.alpha - from.alpha) * progress;
+  }
+  return color2;
+}
+function getHybridProperty(property, type) {
+  return type + property.charAt(0).toUpperCase() + property.substr(1);
+}
+var AnimationDisposer = (
+  /** @class */
+  function() {
+    function AnimationDisposer2(array) {
+      this._disposer = new Disposer(function() {
+        while (array.length !== 0) {
+          array[0].dispose();
+        }
+      });
+    }
+    AnimationDisposer2.prototype.isDisposed = function() {
+      return this._disposer.isDisposed();
+    };
+    AnimationDisposer2.prototype.dispose = function() {
+      this._disposer.dispose();
+    };
+    return AnimationDisposer2;
+  }()
+);
+var Animation = (
+  /** @class */
+  function(_super) {
+    __extends(Animation2, _super);
+    function Animation2(object, animationOptions, duration, easing) {
+      var _this = (
+        // Init
+        _super.call(this) || this
+      );
+      _this.duration = 0;
+      _this.easing = linear;
+      _this.progress = 0;
+      _this._loop = 0;
+      _this._pause = false;
+      _this._delayTimeout = null;
+      _this._time = 0;
+      _this._isFinished = false;
+      _this.className = "Animation";
+      if (options.animationsEnabled === false) {
+        duration = 0;
+      }
+      _this.object = object;
+      _this.animationOptions = toArray(animationOptions);
+      _this.duration = duration;
+      if (easing) {
+        _this.easing = easing;
+      }
+      _this.applyTheme();
+      return _this;
+    }
+    Animation2.prototype.debug = function() {
+    };
+    Animation2.prototype.dispose = function() {
+      _super.prototype.dispose.call(this);
+      this.pause();
+    };
+    Animation2.prototype.delay = function(delay) {
+      var _this = this;
+      if (delay > 0) {
+        this.pause();
+        move(this.object.animations, this);
+        var id_1 = setTimeout(function() {
+          _this._delayTimeout = null;
+          _this.start();
+        }, delay);
+        this._delayTimeout = new Disposer(function() {
+          clearTimeout(id_1);
+        });
+      }
+      return this;
+    };
+    Animation2.prototype._start = function() {
+      this._isFinished = false;
+      if (this._delayTimeout) {
+        this.removeDispose(this._delayTimeout);
+        this._delayTimeout = null;
+      }
+      this.stopSameAnimations();
+      this._pause = false;
+      move(system.animations, this);
+      move(this.object.animations, this);
+      system.requestFrame();
+    };
+    Animation2.prototype.start = function() {
+      this._start();
+      this._startTime = Date.now();
+      this._time = 0;
+      this.staticOptions = [];
+      for (var i = this.animationOptions.length - 1; i >= 0; i--) {
+        var options_1 = this.animationOptions[i];
+        if (!hasValue(options_1.from)) {
+          if (options_1.childObject) {
+            options_1.from = options_1.childObject[options_1.property];
+          } else {
+            options_1.from = this.object[options_1.property];
+            if (!hasValue(options_1.from)) {
+              options_1.from = SVGDefaults[options_1.property];
+            }
+          }
+        }
+        if (options_1.from == options_1.to) {
+          remove(this.animationOptions, options_1);
+        } else if (!hasValue(options_1.from) || !(options_1.from instanceof Percent) && options_1.to instanceof Percent || options_1.from instanceof Percent && !(options_1.to instanceof Percent)) {
+          this.staticOptions.push(options_1);
+          remove(this.animationOptions, options_1);
+        } else {
+          if (isNumber(options_1.to)) {
+            options_1.updateMethod = getProgressNumber;
+            if (options_1.from instanceof Percent) {
+              var convertedFrom = this.object[getHybridProperty(options_1.property, "pixel")];
+              if (!isNaN(convertedFrom)) {
+                options_1.from = convertedFrom;
+              } else {
+                this.staticOptions.push(options_1);
+                remove(this.animationOptions, options_1);
+              }
+            } else if (isNaN(options_1.from)) {
+              this.staticOptions.push(options_1);
+              remove(this.animationOptions, options_1);
+            }
+          } else {
+            if (options_1.to instanceof Color) {
+              if (options_1.from) {
+                options_1.updateMethod = getProgressColor;
+              } else {
+                this.staticOptions.push(options_1);
+                remove(this.animationOptions, options_1);
+              }
+            } else if (options_1.to instanceof Percent) {
+              options_1.updateMethod = getProgressPercent;
+              if (!isNaN(options_1.from)) {
+                var convertedFrom = this.object[getHybridProperty(options_1.property, "relative")];
+                if (!isNaN(convertedFrom)) {
+                  options_1.from = percent(convertedFrom * 100);
+                }
+              }
+            } else {
+              this.staticOptions.push(options_1);
+              remove(this.animationOptions, options_1);
+            }
+          }
+        }
+      }
+      this.applyStaticOptions();
+      if (this.events.isEnabled("animationstarted")) {
+        var event_1 = {
+          type: "animationstarted",
+          target: this,
+          progress: this.progress
+        };
+        this.events.dispatchImmediately("animationstarted", event_1);
+      }
+      this.update();
+      if (this.duration === 0) {
+        this.end();
+      }
+      return this;
+    };
+    Animation2.prototype.loop = function(count) {
+      if (!isNumber(count)) {
+        count = Infinity;
+      }
+      this._loop = count;
+      return this;
+    };
+    Animation2.prototype.pause = function() {
+      this._pause = true;
+      if (this._delayTimeout) {
+        this.removeDispose(this._delayTimeout);
+        this._delayTimeout = null;
+      }
+      remove(system.animations, this);
+      remove(this.object.animations, this);
+      return this;
+    };
+    Animation2.prototype.resume = function() {
+      this._start();
+      this._startTime = Date.now() - this._time;
+      return this;
+    };
+    Animation2.prototype.end = function() {
+      if (this._loop == 0) {
+        this.pause();
+      }
+      this.setProgress(1);
+      this.applyStaticOptions();
+      if (this.events.isEnabled("animationended")) {
+        var event_2 = {
+          type: "animationended",
+          target: this,
+          progress: this.progress
+        };
+        this.events.dispatchImmediately("animationended", event_2);
+      }
+      if (this._loop > 0) {
+        this._loop--;
+        this.start();
+      } else {
+        this.stop();
+        this._isFinished = true;
+      }
+      return this;
+    };
+    Animation2.prototype.kill = function() {
+      this.pause();
+      this._isFinished = true;
+    };
+    Animation2.prototype.isFinished = function() {
+      return this._isFinished;
+    };
+    Animation2.prototype.applyStaticOptions = function() {
+      var _this = this;
+      each(this.staticOptions, function(options2) {
+        if (options2.childObject) {
+          options2.childObject[options2.property] = _this.progress == 1 ? options2.to : options2.from;
+        } else {
+          _this.object[options2.property] = _this.progress == 1 ? options2.to : options2.from;
+        }
+      });
+    };
+    Animation2.prototype.stop = function(skipEvent) {
+      this.pause();
+      if (!skipEvent) {
+        if (this.events.isEnabled("animationstopped")) {
+          var event_3 = {
+            type: "animationstopped",
+            target: this,
+            progress: this.progress
+          };
+          this.events.dispatchImmediately("animationstopped", event_3);
+        }
+      }
+      return this;
+    };
+    Animation2.prototype.setProgress = function(progress) {
+      var _this = this;
+      this._time = this.duration * progress;
+      each(this.animationOptions, function(options2) {
+        if (options2.updateMethod && hasValue(options2.from)) {
+          var value = options2.updateMethod(progress, options2.from, options2.to);
+          if (options2.childObject) {
+            options2.childObject[options2.property] = value;
+          } else {
+            _this.object[options2.property] = value;
+          }
+        }
+      });
+      this.progress = progress;
+      if (this.events.isEnabled("animationprogress")) {
+        var event_4 = {
+          type: "animationprogress",
+          target: this,
+          progress: this.progress
+        };
+        this.events.dispatchImmediately("animationprogress", event_4);
+      }
+      system.requestFrame();
+    };
+    Animation2.prototype.update = function() {
+      if (!this._pause) {
+        var progress = void 0;
+        this._time = fitToRange(Date.now() - this._startTime, 0, this.duration);
+        var timeProgress = this._time / this.duration;
+        progress = this.easing(timeProgress);
+        if (this.duration == 0 || !isNumber(progress) || timeProgress >= 1) {
+          progress = 1;
+        }
+        this.setProgress(progress);
+        if (round(this._time / this.duration, 6) == 1) {
+          this.end();
+        }
+      }
+      return this;
+    };
+    Object.defineProperty(Animation2.prototype, "delayed", {
+      /**
+       * Returns `true` if this animation is delayed.
+       *
+       * @readonly
+       * @return [description]
+       */
+      get: function() {
+        return this._delayTimeout ? true : false;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Animation2.prototype.stopSameAnimations = function() {
+      var _this = this;
+      each(copy(this.object.animations), function(animation) {
+        if (animation !== _this && !animation.delayed) {
+          var killed_1 = [];
+          each(_this.animationOptions, function(newOptions) {
+            each(animation.animationOptions, function(oldOptions) {
+              if (newOptions.property == oldOptions.property && newOptions.childObject == oldOptions.childObject) {
+                killed_1.push(oldOptions);
+                if (animation.animationOptions.length == 0) {
+                  animation.kill();
+                }
+              }
+            });
+          });
+          each(killed_1, function(oldOptions) {
+            remove(animation.animationOptions, oldOptions);
+          });
+        }
+      });
+    };
+    Animation2.prototype.asFunction = function(field) {
+      return field == "easing" || _super.prototype.asIs.call(this, field);
+    };
+    return Animation2;
+  }(BaseObjectEvents)
+);
+
 // node_modules/@amcharts/amcharts4/.internal/core/data/DataParser.js
 var DataParser = (
   /** @class */
@@ -29965,6 +29965,508 @@ var Button = (
 );
 registry.registeredClasses["Button"] = Button;
 
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Circle.js
+var Circle = (
+  /** @class */
+  function(_super) {
+    __extends(Circle2, _super);
+    function Circle2() {
+      var _this = _super.call(this) || this;
+      _this.className = "Circle";
+      _this.element = _this.paper.add("circle");
+      _this.setPercentProperty("radius", percent(100));
+      _this.setPropertyValue("horizontalCenter", "middle");
+      _this.setPropertyValue("verticalCenter", "middle");
+      _this.applyTheme();
+      return _this;
+    }
+    Circle2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      this.element.attr({
+        "r": this.pixelRadius
+      });
+    };
+    Object.defineProperty(Circle2.prototype, "radius", {
+      /**
+       * @return Radius
+       */
+      get: function() {
+        return this.getPropertyValue("radius");
+      },
+      /**
+       * Radius of the circle.
+       *
+       * Can be either absolute (pixels) or relative ([Percent]).
+       *
+       * @param value  Radius
+       */
+      set: function(value) {
+        this.setPercentProperty("radius", value, true, false, 10, false);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Circle2.prototype, "pixelRadius", {
+      /**
+       * Radius of the circle in pixels.
+       *
+       * This is a read-only property. To set radius in pixels, use `radius`
+       * property.
+       *
+       * @readonly
+       * @return Radius (px)
+       */
+      get: function() {
+        return relativeToValue(this.radius, min(this.innerWidth / 2, this.innerHeight / 2));
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Circle2.prototype.measureElement = function() {
+      var pixelRadius = this.pixelRadius;
+      this._bbox = {
+        x: -pixelRadius,
+        y: -pixelRadius,
+        width: pixelRadius * 2,
+        height: pixelRadius * 2
+      };
+    };
+    return Circle2;
+  }(Sprite)
+);
+registry.registeredClasses["Circle"] = Circle;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Ellipse.js
+var Ellipse = (
+  /** @class */
+  function(_super) {
+    __extends(Ellipse2, _super);
+    function Ellipse2() {
+      var _this = _super.call(this) || this;
+      _this.className = "Ellipse";
+      _this.element = _this.paper.add("ellipse");
+      _this.applyTheme();
+      return _this;
+    }
+    Ellipse2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      this.element.attr({
+        "rx": this.radius
+      });
+      this.element.attr({
+        "ry": this.radiusY
+      });
+    };
+    Object.defineProperty(Ellipse2.prototype, "radiusY", {
+      /**
+       * @return Vertical radius
+       */
+      get: function() {
+        return this.innerHeight / 2;
+      },
+      /**
+       * Vertical radius.
+       *
+       * It's a relative size to the `radius`.
+       *
+       * E.g. 0.8 will mean the height of the ellipsis will be 80% of it's
+       * horizontal radius.
+       *
+       * @param value  Vertical radius
+       */
+      set: function(value) {
+        this.height = value * 2;
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Ellipse2.prototype, "radius", {
+      /**
+       * @return Horizontal radius
+       */
+      get: function() {
+        return this.innerWidth / 2;
+      },
+      /**
+       * Horizontal radius.
+       *
+       * @param value  Horizontal radius
+       */
+      set: function(value) {
+        this.width = value * 2;
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return Ellipse2;
+  }(Circle)
+);
+registry.registeredClasses["Ellipse"] = Ellipse;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Line.js
+var Line = (
+  /** @class */
+  function(_super) {
+    __extends(Line2, _super);
+    function Line2() {
+      var _this = _super.call(this) || this;
+      _this.className = "Line";
+      _this.element = _this.paper.add("line");
+      _this.fill = color();
+      _this.x1 = 0;
+      _this.y1 = 0;
+      _this.applyTheme();
+      return _this;
+    }
+    Line2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      if (this.x1 == this.x2 || this.y1 == this.y2) {
+        this.pixelPerfect = true;
+      } else {
+        this.pixelPerfect = false;
+      }
+      this.x1 = this.x1;
+      this.x2 = this.x2;
+      this.y1 = this.y1;
+      this.y2 = this.y2;
+    };
+    Object.defineProperty(Line2.prototype, "x1", {
+      /**
+       * @return X
+       */
+      get: function() {
+        return this.getPropertyValue("x1");
+      },
+      /**
+       * X coordinate of first end.
+       *
+       * @param value X
+       */
+      set: function(value) {
+        if (!isNumber(value)) {
+          value = 0;
+        }
+        var delta = 0;
+        if (this.pixelPerfect && this.stroke instanceof LinearGradient) {
+          delta = 1e-5;
+        }
+        this.setPropertyValue("x1", value, true);
+        this.element.attr({
+          "x1": value + delta
+        });
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Line2.prototype, "x2", {
+      /**
+       * @return X
+       */
+      get: function() {
+        var value = this.getPropertyValue("x2");
+        if (!isNumber(value)) {
+          value = this.pixelWidth;
+        }
+        return value;
+      },
+      /**
+       * X coordinate of second end.
+       *
+       * @param value X
+       */
+      set: function(value) {
+        if (!isNumber(value)) {
+          value = 0;
+        }
+        this.setPropertyValue("x2", value, true);
+        this.element.attr({
+          "x2": value
+        });
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Line2.prototype, "y1", {
+      /**
+       * @return Y
+       */
+      get: function() {
+        return this.getPropertyValue("y1");
+      },
+      /**
+       * Y coordinate of first end.
+       *
+       * @param value Y
+       */
+      set: function(value) {
+        if (!isNumber(value)) {
+          value = 0;
+        }
+        var delta = 0;
+        if (this.pixelPerfect && this.stroke instanceof LinearGradient) {
+          delta = 1e-5;
+        }
+        this.setPropertyValue("y1", value, true);
+        this.element.attr({
+          "y1": value + delta
+        });
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Line2.prototype, "y2", {
+      /**
+       * @return Y
+       */
+      get: function() {
+        var value = this.getPropertyValue("y2");
+        if (!isNumber(value)) {
+          value = this.pixelHeight;
+        }
+        return value;
+      },
+      /**
+       * Y coordinate of second end.
+       *
+       * @param value Y
+       */
+      set: function(value) {
+        if (!isNumber(value)) {
+          value = 0;
+        }
+        this.setPropertyValue("y2", value, true);
+        this.element.attr({
+          "y2": value
+        });
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Line2.prototype.positionToPoint = function(position) {
+      var point1 = {
+        x: this.x1,
+        y: this.y1
+      };
+      var point2 = {
+        x: this.x2,
+        y: this.y2
+      };
+      var point = getMidPoint(point1, point2, position);
+      var angle = getAngle(point1, point2);
+      return {
+        x: point.x,
+        y: point.y,
+        angle
+      };
+    };
+    return Line2;
+  }(Sprite)
+);
+registry.registeredClasses["Line"] = Line;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/PointedShape.js
+var PointedShape = (
+  /** @class */
+  function(_super) {
+    __extends(PointedShape2, _super);
+    function PointedShape2() {
+      var _this = _super.call(this) || this;
+      _this.className = "PointedShape";
+      _this.pointerBaseWidth = 15;
+      _this.pointerLength = 10;
+      _this.pointerY = 0;
+      _this.pointerX = 0;
+      _this.applyTheme();
+      return _this;
+    }
+    PointedShape2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      if (!isNumber(this.pointerX)) {
+        this.pointerX = this.pixelWidth / 2;
+      }
+      if (!isNumber(this.pointerY)) {
+        this.pointerY = this.pixelHeight + 10;
+      }
+    };
+    Object.defineProperty(PointedShape2.prototype, "pointerBaseWidth", {
+      /**
+       * @return Width (px)
+       */
+      get: function() {
+        return this.getPropertyValue("pointerBaseWidth");
+      },
+      /**
+       * A width of the pinter's (stem's) thick end (base) in pixels.
+       *
+       * @default 15
+       * @param value  Width (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("pointerBaseWidth", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(PointedShape2.prototype, "pointerLength", {
+      /**
+       * @return Length (px)
+       */
+      get: function() {
+        return this.getPropertyValue("pointerLength");
+      },
+      /**
+       * A length of the pinter (stem) in pixels.
+       *
+       * @default 10
+       * @param value  Length (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("pointerLength", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(PointedShape2.prototype, "pointerX", {
+      /**
+       * @return X
+       */
+      get: function() {
+        return this.getPropertyValue("pointerX");
+      },
+      /**
+       * X coordinate the shape is pointing to.
+       *
+       * @param value  X
+       */
+      set: function(value) {
+        this.setPropertyValue("pointerX", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(PointedShape2.prototype, "pointerY", {
+      /**
+       * @return Y
+       */
+      get: function() {
+        return this.getPropertyValue("pointerY");
+      },
+      /**
+       * Y coordinate the shape is pointing to.
+       *
+       * @param value  Y
+       */
+      set: function(value) {
+        this.setPropertyValue("pointerY", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return PointedShape2;
+  }(Sprite)
+);
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/PointedRectangle.js
+var PointedRectangle = (
+  /** @class */
+  function(_super) {
+    __extends(PointedRectangle2, _super);
+    function PointedRectangle2() {
+      var _this = _super.call(this) || this;
+      _this.className = "PointedRectangle";
+      _this.element = _this.paper.add("path");
+      _this.cornerRadius = 6;
+      _this.applyTheme();
+      return _this;
+    }
+    PointedRectangle2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      var cr = this.cornerRadius;
+      var w = this.innerWidth;
+      var h = this.innerHeight;
+      if (w > 0 && h > 0) {
+        var x = this.pointerX;
+        var y = this.pointerY;
+        var bwh = this.pointerBaseWidth / 2;
+        var maxcr = min(w / 2, h / 2);
+        var crtl = fitToRange(cr, 0, maxcr);
+        var crtr = fitToRange(cr, 0, maxcr);
+        var crbr = fitToRange(cr, 0, maxcr);
+        var crbl = fitToRange(cr, 0, maxcr);
+        var xtl = 0;
+        var ytl = 0;
+        var xtr = w;
+        var ytr = 0;
+        var xbr = w;
+        var ybr = h;
+        var xbl = 0;
+        var ybl = h;
+        var lineT = void 0;
+        var lineR = void 0;
+        var lineB = void 0;
+        var lineL = void 0;
+        var d1 = (x - xtl) * (ybr - ytl) - (y - ytl) * (xbr - xtl);
+        var d2 = (x - xbl) * (ytr - ybl) - (y - ybl) * (xtr - xbl);
+        if (d1 > 0 && d2 > 0) {
+          var stemX = fitToRange(x, crtl + bwh, w - bwh - crtr);
+          y = fitToRange(y, -Infinity, 0);
+          lineT = "M" + crtl + ",0 L" + (stemX - bwh) + ",0 L" + x + "," + y + " L" + (stemX + bwh) + ",0 L" + (w - crtr) + ",0";
+        } else {
+          lineT = "M" + crtl + ",0 L" + (w - crtr) + ",0";
+        }
+        if (d1 < 0 && d2 < 0) {
+          var stemX = fitToRange(x, crbl + bwh, w - bwh - crbr);
+          y = fitToRange(y, h, Infinity);
+          lineB = " L" + (w - crbr) + "," + h + " L" + (stemX + bwh) + "," + h + " L" + x + "," + y + " L" + (stemX - bwh) + "," + h + " L" + crbl + "," + h;
+        } else {
+          lineB = " L" + crbl + "," + h;
+        }
+        if (d1 < 0 && d2 > 0) {
+          var stemY = fitToRange(y, crtl + bwh, h - crbl - bwh);
+          x = fitToRange(x, -Infinity, 0);
+          lineL = " L0," + (h - crbl) + " L0," + (stemY + bwh) + " L" + x + "," + y + " L0," + (stemY - bwh) + " L0," + crtl;
+        } else {
+          lineL = " L0," + crtl;
+        }
+        if (d1 > 0 && d2 < 0) {
+          var stemY = fitToRange(y, crtr + bwh, h - bwh - crbr);
+          x = fitToRange(x, w, Infinity);
+          lineR = " L" + w + "," + crtr + " L" + w + "," + (stemY - bwh) + " L" + x + "," + y + " L" + w + "," + (stemY + bwh) + " L" + w + "," + (h - crbr);
+        } else {
+          lineR = " L" + w + "," + (h - crbr);
+        }
+        var arcTR = " a" + crtr + "," + crtr + " 0 0 1 " + crtr + "," + crtr;
+        var arcBR = " a" + crbr + "," + crbr + " 0 0 1 -" + crbr + "," + crbr;
+        var arcBL = " a" + crbl + "," + crbl + " 0 0 1 -" + crbl + ",-" + crbl;
+        var arcTL = " a" + crtl + "," + crtl + " 0 0 1 " + crtl + ",-" + crtl;
+        this.path = lineT + arcTR + lineR + arcBR + lineB + arcBL + lineL + arcTL;
+      }
+    };
+    Object.defineProperty(PointedRectangle2.prototype, "cornerRadius", {
+      /**
+       * @return Corner radius (px)
+       */
+      get: function() {
+        return this.getPropertyValue("cornerRadius");
+      },
+      /**
+       * Radius of rectangle's border in pixels.
+       *
+       * @default 0
+       * @param value  Corner radius (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("cornerRadius", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return PointedRectangle2;
+  }(PointedShape)
+);
+
 // node_modules/@amcharts/amcharts4/.internal/core/rendering/Path.js
 var Path_exports = {};
 __export(Path_exports, {
@@ -30276,196 +30778,600 @@ function pointsToPath(points) {
   return path;
 }
 
-// node_modules/@amcharts/amcharts4/.internal/core/elements/PointedShape.js
-var PointedShape = (
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Polyline.js
+var Polyline = (
   /** @class */
   function(_super) {
-    __extends(PointedShape2, _super);
-    function PointedShape2() {
+    __extends(Polyline2, _super);
+    function Polyline2() {
       var _this = _super.call(this) || this;
-      _this.className = "PointedShape";
-      _this.pointerBaseWidth = 15;
-      _this.pointerLength = 10;
-      _this.pointerY = 0;
-      _this.pointerX = 0;
+      _this._distance = 0;
+      _this.className = "Polyline";
+      _this.element = _this.paper.add("path");
+      _this.shapeRendering = "auto";
+      _this.fill = color();
+      _this.strokeOpacity = 1;
       _this.applyTheme();
       return _this;
     }
-    PointedShape2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      if (!isNumber(this.pointerX)) {
-        this.pointerX = this.pixelWidth / 2;
+    Polyline2.prototype.makePath = function() {
+      this._distance = 0;
+      var segments = this.segments;
+      if (segments && segments.length > 0) {
+        var path = "";
+        for (var i = 0, len = segments.length; i < len; i++) {
+          var points = segments[i];
+          if (points.length > 0) {
+            path += moveTo(points[0]);
+            for (var p = 1; p < points.length; p++) {
+              var point = points[p];
+              path += lineTo(point);
+              this._distance += getDistance(points[p - 1], point);
+            }
+          }
+        }
+        this.path = path;
       }
-      if (!isNumber(this.pointerY)) {
-        this.pointerY = this.pixelHeight + 10;
-      }
+      this._realSegments = segments;
     };
-    Object.defineProperty(PointedShape2.prototype, "pointerBaseWidth", {
+    Object.defineProperty(Polyline2.prototype, "segments", {
       /**
-       * @return Width (px)
+       * @return Segments
        */
       get: function() {
-        return this.getPropertyValue("pointerBaseWidth");
+        return this.getPropertyValue("segments");
       },
       /**
-       * A width of the pinter's (stem's) thick end (base) in pixels.
+       * A list of segment coordinates for the multi-part line.
        *
-       * @default 15
-       * @param value  Width (px)
+       * @todo Example
+       * @param segments  Segments
        */
-      set: function(value) {
-        this.setPropertyValue("pointerBaseWidth", value, true);
+      set: function(segments) {
+        this.setPropertyValue("segments", segments);
+        this.makePath();
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(PointedShape2.prototype, "pointerLength", {
+    Object.defineProperty(Polyline2.prototype, "distance", {
       /**
-       * @return Length (px)
+       * [distance description]
+       *
+       * @todo Description
+       * @return [description]
        */
       get: function() {
-        return this.getPropertyValue("pointerLength");
-      },
-      /**
-       * A length of the pinter (stem) in pixels.
-       *
-       * @default 10
-       * @param value  Length (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("pointerLength", value, true);
+        return this._distance;
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(PointedShape2.prototype, "pointerX", {
+    Polyline2.prototype.positionToPoint = function(position) {
+      var deltaAngle = 0;
+      if (position < 0) {
+        position = Math.abs(position);
+        deltaAngle = 180;
+      }
+      var segments = this._realSegments;
+      if (segments) {
+        var totalDistance = this.distance;
+        var currentDistance = 0;
+        var distanceAB = void 0;
+        var positionA = 0;
+        var positionB = 0;
+        var pointA = void 0;
+        var pointB = void 0;
+        for (var s2 = 0; s2 < segments.length; s2++) {
+          var points = segments[s2];
+          if (points.length > 1) {
+            for (var p = 1; p < points.length; p++) {
+              pointA = points[p - 1];
+              pointB = points[p];
+              positionA = currentDistance / totalDistance;
+              distanceAB = getDistance(pointA, pointB);
+              currentDistance += distanceAB;
+              positionB = currentDistance / totalDistance;
+              if (positionA <= position && positionB > position) {
+                s2 = segments.length;
+                break;
+              }
+            }
+          } else if (points.length == 1) {
+            pointA = points[0];
+            pointB = points[0];
+            positionA = 0;
+            positionB = 1;
+          }
+        }
+        if (pointA && pointB) {
+          var positionAB = (position - positionA) / (positionB - positionA);
+          var midPoint = getMidPoint(pointA, pointB, positionAB);
+          return {
+            x: midPoint.x,
+            y: midPoint.y,
+            angle: deltaAngle + getAngle(pointA, pointB)
+          };
+        }
+      }
+      return {
+        x: 0,
+        y: 0,
+        angle: 0
+      };
+    };
+    Object.defineProperty(Polyline2.prototype, "realSegments", {
       /**
-       * @return X
+       * @ignore
        */
       get: function() {
-        return this.getPropertyValue("pointerX");
-      },
-      /**
-       * X coordinate the shape is pointing to.
-       *
-       * @param value  X
-       */
-      set: function(value) {
-        this.setPropertyValue("pointerX", value, true);
+        return this._realSegments;
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(PointedShape2.prototype, "pointerY", {
-      /**
-       * @return Y
-       */
-      get: function() {
-        return this.getPropertyValue("pointerY");
-      },
-      /**
-       * Y coordinate the shape is pointing to.
-       *
-       * @param value  Y
-       */
-      set: function(value) {
-        this.setPropertyValue("pointerY", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return PointedShape2;
+    return Polyline2;
   }(Sprite)
 );
+registry.registeredClasses["Polyline"] = Polyline;
 
-// node_modules/@amcharts/amcharts4/.internal/core/elements/PointedRectangle.js
-var PointedRectangle = (
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Polyspline.js
+var Polyspline = (
   /** @class */
   function(_super) {
-    __extends(PointedRectangle2, _super);
-    function PointedRectangle2() {
+    __extends(Polyspline2, _super);
+    function Polyspline2() {
       var _this = _super.call(this) || this;
-      _this.className = "PointedRectangle";
-      _this.element = _this.paper.add("path");
-      _this.cornerRadius = 6;
+      _this.className = "Polyspline";
+      _this.tensionX = 0.5;
+      _this.tensionY = 0.5;
       _this.applyTheme();
       return _this;
     }
-    PointedRectangle2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      var cr = this.cornerRadius;
-      var w = this.innerWidth;
-      var h = this.innerHeight;
-      if (w > 0 && h > 0) {
-        var x = this.pointerX;
-        var y = this.pointerY;
-        var bwh = this.pointerBaseWidth / 2;
-        var maxcr = min(w / 2, h / 2);
-        var crtl = fitToRange(cr, 0, maxcr);
-        var crtr = fitToRange(cr, 0, maxcr);
-        var crbr = fitToRange(cr, 0, maxcr);
-        var crbl = fitToRange(cr, 0, maxcr);
-        var xtl = 0;
-        var ytl = 0;
-        var xtr = w;
-        var ytr = 0;
-        var xbr = w;
-        var ybr = h;
-        var xbl = 0;
-        var ybl = h;
-        var lineT = void 0;
-        var lineR = void 0;
-        var lineB = void 0;
-        var lineL = void 0;
-        var d1 = (x - xtl) * (ybr - ytl) - (y - ytl) * (xbr - xtl);
-        var d2 = (x - xbl) * (ytr - ybl) - (y - ybl) * (xtr - xbl);
-        if (d1 > 0 && d2 > 0) {
-          var stemX = fitToRange(x, crtl + bwh, w - bwh - crtr);
-          y = fitToRange(y, -Infinity, 0);
-          lineT = "M" + crtl + ",0 L" + (stemX - bwh) + ",0 L" + x + "," + y + " L" + (stemX + bwh) + ",0 L" + (w - crtr) + ",0";
-        } else {
-          lineT = "M" + crtl + ",0 L" + (w - crtr) + ",0";
+    Polyspline2.prototype.makePath = function() {
+      this._distance = 0;
+      var segments = this.segments;
+      var tensionX = this.tensionX;
+      var tensionY = this.tensionY;
+      this.allPoints = [];
+      if (segments && segments.length > 0) {
+        var path = "";
+        this._realSegments = [];
+        for (var i = 0, len = segments.length; i < len; i++) {
+          var points = segments[i];
+          var realPoints = [];
+          this._realSegments.push(realPoints);
+          if (points.length > 0) {
+            var first = points[0];
+            var last = points[points.length - 1];
+            var closed_1 = false;
+            if (round(first.x, 3) == round(last.x) && round(first.y) == round(last.y)) {
+              closed_1 = true;
+            }
+            path += moveTo(points[0]);
+            for (var p = 0; p < points.length - 1; p++) {
+              var p0 = points[p - 1];
+              var p1 = points[p];
+              var p2 = points[p + 1];
+              var p3 = points[p + 2];
+              if (p === 0) {
+                p0 = points[p];
+              } else if (p == points.length - 2) {
+                p3 = points[p + 1];
+              }
+              if (!p3) {
+                p3 = p2;
+              }
+              if (p === 0) {
+                if (closed_1) {
+                  p0 = points[points.length - 2];
+                } else {
+                  p0 = points[i];
+                }
+              } else if (p == points.length - 2) {
+                if (closed_1) {
+                  p3 = points[1];
+                } else {
+                  p3 = points[p + 1];
+                }
+              }
+              var controlPointA = getCubicControlPointA(p0, p1, p2, p3, tensionX, tensionY);
+              var controlPointB = getCubicControlPointB(p0, p1, p2, p3, tensionX, tensionY);
+              path += cubicCurveTo(p2, controlPointA, controlPointB);
+              var stepCount = Math.ceil(getCubicCurveDistance(p1, p2, controlPointA, controlPointB, 20)) * 1.2;
+              var prevPoint = p1;
+              if (stepCount > 0) {
+                for (var s2 = 0; s2 <= stepCount; s2++) {
+                  var point = getPointOnCubicCurve(p1, p2, controlPointA, controlPointB, s2 / stepCount);
+                  if (point.x == prevPoint.x && point.y == prevPoint.y) {
+                    continue;
+                  }
+                  realPoints.push(point);
+                  var angle = round(getAngle(prevPoint, point), 5);
+                  this._distance += getDistance(prevPoint, point);
+                  this.allPoints[Math.floor(this._distance)] = {
+                    x: point.x,
+                    y: point.y,
+                    angle
+                  };
+                  prevPoint = point;
+                }
+              } else {
+                realPoints.push(p0);
+              }
+            }
+          }
+          var allPoints = this.allPoints;
+          if (allPoints.length > 1) {
+            for (var i_1 = 0; i_1 < allPoints.length; i_1++) {
+              if (!allPoints[i_1]) {
+                if (i_1 > 1) {
+                  allPoints[i_1] = allPoints[i_1 - 1];
+                } else {
+                  for (var k = 1; k < allPoints.length; k++) {
+                    if (allPoints[k]) {
+                      allPoints[i_1] = allPoints[k];
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-        if (d1 < 0 && d2 < 0) {
-          var stemX = fitToRange(x, crbl + bwh, w - bwh - crbr);
-          y = fitToRange(y, h, Infinity);
-          lineB = " L" + (w - crbr) + "," + h + " L" + (stemX + bwh) + "," + h + " L" + x + "," + y + " L" + (stemX - bwh) + "," + h + " L" + crbl + "," + h;
-        } else {
-          lineB = " L" + crbl + "," + h;
-        }
-        if (d1 < 0 && d2 > 0) {
-          var stemY = fitToRange(y, crtl + bwh, h - crbl - bwh);
-          x = fitToRange(x, -Infinity, 0);
-          lineL = " L0," + (h - crbl) + " L0," + (stemY + bwh) + " L" + x + "," + y + " L0," + (stemY - bwh) + " L0," + crtl;
-        } else {
-          lineL = " L0," + crtl;
-        }
-        if (d1 > 0 && d2 < 0) {
-          var stemY = fitToRange(y, crtr + bwh, h - bwh - crbr);
-          x = fitToRange(x, w, Infinity);
-          lineR = " L" + w + "," + crtr + " L" + w + "," + (stemY - bwh) + " L" + x + "," + y + " L" + w + "," + (stemY + bwh) + " L" + w + "," + (h - crbr);
-        } else {
-          lineR = " L" + w + "," + (h - crbr);
-        }
-        var arcTR = " a" + crtr + "," + crtr + " 0 0 1 " + crtr + "," + crtr;
-        var arcBR = " a" + crbr + "," + crbr + " 0 0 1 -" + crbr + "," + crbr;
-        var arcBL = " a" + crbl + "," + crbl + " 0 0 1 -" + crbl + ",-" + crbl;
-        var arcTL = " a" + crtl + "," + crtl + " 0 0 1 " + crtl + ",-" + crtl;
-        this.path = lineT + arcTR + lineR + arcBR + lineB + arcBL + lineL + arcTL;
+        this.path = path;
       }
     };
-    Object.defineProperty(PointedRectangle2.prototype, "cornerRadius", {
+    Polyspline2.prototype.getClosestPointIndex = function(point) {
+      var points = this.allPoints;
+      var index;
+      var closest = Infinity;
+      if (points.length > 1) {
+        for (var p = 1; p < points.length; p++) {
+          var distance = getDistance(point, points[p]);
+          if (distance < closest) {
+            index = p;
+            closest = distance;
+          }
+        }
+      }
+      return index;
+    };
+    Object.defineProperty(Polyspline2.prototype, "tensionX", {
       /**
-       * @return Corner radius (px)
+       * @return Tension
+       */
+      get: function() {
+        return this.getPropertyValue("tensionX");
+      },
+      /**
+       * Horizontal tension for the spline.
+       *
+       * Used by the line smoothing algorithm.
+       *
+       * @default 0.5
+       * @param value  Tension
+       */
+      set: function(value) {
+        this.setPropertyValue("tensionX", value);
+        this.makePath();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Polyspline2.prototype, "tensionY", {
+      /**
+       * @return Tension
+       */
+      get: function() {
+        return this.getPropertyValue("tensionY");
+      },
+      /**
+       * Vertical tension for the spline.
+       *
+       * Used by the line smoothing algorithm.
+       *
+       * @default 0.5
+       * @param value  Tensions
+       */
+      set: function(value) {
+        this.setPropertyValue("tensionY", value, true);
+        this.makePath();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Polyspline2.prototype.positionToPoint = function(position, extend) {
+      var deltaAngle = 0;
+      var allPoints = this.allPoints;
+      var len = allPoints.length;
+      if (!isNumber(position)) {
+        position = 0;
+      }
+      if (len > 1) {
+        if (extend && len > 3) {
+          if (position < 0) {
+            if (position < -0.01) {
+              position = -0.01;
+            }
+            var f0 = allPoints[0];
+            var f1 = allPoints[1];
+            var x = f0.x - (f0.x - f1.x) * len * position;
+            var y = f0.y - (f0.y - f1.y) * len * position;
+            return {
+              x,
+              y,
+              angle: getAngle(f0, f1)
+            };
+          } else if (position > 1) {
+            if (position > 1.01) {
+              position = 1.01;
+            }
+            var f0 = allPoints[allPoints.length - 2];
+            var f1 = allPoints[allPoints.length - 3];
+            var x = f0.x + (f0.x - f1.x) * len * (position - 1);
+            var y = f0.y + (f0.y - f1.y) * len * (position - 1);
+            return {
+              x,
+              y,
+              angle: getAngle(f0, {
+                x,
+                y
+              })
+            };
+          } else if (position == 1) {
+            var point_1 = allPoints[allPoints.length - 1];
+            return {
+              x: point_1.x,
+              y: point_1.y,
+              angle: point_1.angle
+            };
+          }
+        } else {
+          if (position < 0) {
+            position = Math.abs(position);
+            deltaAngle = 180;
+          }
+          if (position >= 1) {
+            position = 0.9999999999999;
+          }
+        }
+        var point = allPoints[Math.floor(position * len)];
+        return {
+          x: point.x,
+          y: point.y,
+          angle: point.angle + deltaAngle
+        };
+      } else if (len == 1) {
+        var point = allPoints[0];
+        return {
+          x: point.x,
+          y: point.y,
+          angle: point.angle
+        };
+      } else {
+        return {
+          x: 0,
+          y: 0,
+          angle: 0
+        };
+      }
+    };
+    return Polyspline2;
+  }(Polyline)
+);
+registry.registeredClasses["Polyspline"] = Polyspline;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Slice.js
+var Slice = (
+  /** @class */
+  function(_super) {
+    __extends(Slice2, _super);
+    function Slice2() {
+      var _this = (
+        // Init
+        _super.call(this) || this
+      );
+      _this.className = "Slice";
+      _this.setPropertyValue("cornerRadius", 0);
+      _this.setPropertyValue("startAngle", 0);
+      _this.setPercentProperty("innerRadius", 0);
+      _this.setPercentProperty("radius", 0);
+      _this.setPropertyValue("arc", 0);
+      _this.setPropertyValue("shiftRadius", 0);
+      _this.strokeOpacity = 1;
+      _this.setPropertyValue("layout", "none");
+      _this.slice = _this.createChild(Sprite);
+      _this.slice.isMeasured = false;
+      _this._disposers.push(_this.slice);
+      _this.applyTheme();
+      return _this;
+    }
+    Slice2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      var radiusY = this.radiusY;
+      if (this.radius > 0 && radiusY == 0) {
+        radiusY = 0.01;
+      }
+      this.slice.path = arc(this.startAngle, this.arc, this.radius, this.pixelInnerRadius, radiusY, this.cornerRadius, this.innerCornerRadius);
+      this.slice.invalidate();
+      this.shiftRadius = this.shiftRadius;
+      if (this.realFill instanceof RadialGradient) {
+        this.updateGradient(this.realFill);
+      }
+      if (this.realStroke instanceof RadialGradient) {
+        this.updateGradient(this.realStroke);
+      }
+    };
+    Slice2.prototype.updateGradient = function(gradient) {
+      gradient.element.attr({
+        "gradientUnits": "userSpaceOnUse"
+      });
+      gradient.element.attr({
+        "r": this.radius
+      });
+      gradient.cx = 0;
+      gradient.cy = 0;
+      gradient.element.attr({
+        radius: this.radius
+      });
+    };
+    Object.defineProperty(Slice2.prototype, "bbox", {
+      /**
+       * Returns bounding box (square) for this element.
+       *
+       * @ignore Exclude from docs
+       */
+      get: function() {
+        if (this.definedBBox) {
+          return this.definedBBox;
+        }
+        if (this.isMeasured) {
+          var innerRect = getArcRect(this.startAngle, this.startAngle + this.arc, this.pixelInnerRadius);
+          var outerRect = getArcRect(this.startAngle, this.startAngle + this.arc, this.radius);
+          return getCommonRectangle([innerRect, outerRect]);
+        } else {
+          return {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0
+          };
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "startAngle", {
+      /**
+       * @return Angle (0-360)
+       */
+      get: function() {
+        return this.getPropertyValue("startAngle");
+      },
+      /**
+       * The angle at which left edge of the slice is drawn. (0-360)
+       *
+       * 0 is to the right of the center.
+       *
+       * @param value  Angle (0-360)
+       */
+      set: function(value) {
+        this.setPropertyValue("startAngle", normalizeAngle(value), true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "arc", {
+      /**
+       * @return [description]
+       */
+      get: function() {
+        return this.getPropertyValue("arc");
+      },
+      /**
+       * [arc description]
+       *
+       * @todo Description
+       * @param value [description]
+       */
+      set: function(value) {
+        if (!isNumber(value)) {
+          value = 0;
+        }
+        this.setPropertyValue("arc", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "radius", {
+      /**
+       * @return Radius (px)
+       */
+      get: function() {
+        var radius = this.getPropertyValue("radius");
+        if (!isNumber(radius)) {
+          radius = 0;
+        }
+        return radius;
+      },
+      /**
+       * Radius of the slice in pixels.
+       *
+       * @param value  Radius (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("radius", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "radiusY", {
+      /**
+       * @return Vertical radius (0-1)
+       */
+      get: function() {
+        var value = this.getPropertyValue("radiusY");
+        if (!isNumber(value)) {
+          value = this.radius;
+        }
+        return value;
+      },
+      /**
+       * Vertical radius for creating skewed slices.
+       *
+       * This is relevant to `radius`, e.g. 0.5 will set vertical radius to half
+       * the `radius`.
+       *
+       * @param value Vertical radius (0-1)
+       */
+      set: function(value) {
+        this.setPropertyValue("radiusY", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "innerRadius", {
+      /**
+       * @return Radius (px or %)
+       */
+      get: function() {
+        return this.getPropertyValue("innerRadius");
+      },
+      /**
+       * Inner radius of the slice for creating cut out (donut) slices.
+       *
+       * @default 0
+       * @param value  Radius (px or %)
+       */
+      set: function(value) {
+        this.setPercentProperty("innerRadius", value, true, false, 10, false);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "pixelInnerRadius", {
+      /**
+       * @return Radius px
+       */
+      get: function() {
+        return relativeToValue(this.innerRadius, this.radius);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "cornerRadius", {
+      /**
+       * @return Radius (px)
        */
       get: function() {
         return this.getPropertyValue("cornerRadius");
       },
       /**
-       * Radius of rectangle's border in pixels.
+       * Radius of slice's outer corners in pixels.
        *
        * @default 0
-       * @param value  Corner radius (px)
+       * @param value  Radius (px)
        */
       set: function(value) {
         this.setPropertyValue("cornerRadius", value, true);
@@ -30473,9 +31379,966 @@ var PointedRectangle = (
       enumerable: true,
       configurable: true
     });
-    return PointedRectangle2;
-  }(PointedShape)
+    Object.defineProperty(Slice2.prototype, "innerCornerRadius", {
+      /**
+       * @return Radius (px)
+       */
+      get: function() {
+        return this.getPropertyValue("innerCornerRadius");
+      },
+      /**
+       * Radius of slice's inner corners in pixels.
+       *
+       * @default 0
+       * @param value  Radius (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("innerCornerRadius", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "shiftRadius", {
+      /**
+       * @return Radius shift
+       */
+      get: function() {
+        return this.getPropertyValue("shiftRadius");
+      },
+      /**
+       * Indicates how far (relatively to center) a slice should be moved.
+       *
+       * The value is relative to the radius of the slice. Meaning 0 no shift,
+       * 1 - slice shifted outside by whole of its radius.
+       *
+       * @param  value  Radius shift
+       */
+      set: function(value) {
+        this.setPropertyValue("shiftRadius", value);
+        value = this.getPropertyValue("shiftRadius");
+        this.dx = value * this.radius * this.ix;
+        this.dy = value * this.radiusY * this.iy;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "ix", {
+      /**
+       * [ix description]
+       *
+       * @ignore Exclude from docs
+       * @todo Description
+       * @return [description]
+       */
+      get: function() {
+        return cos(this.middleAngle);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "iy", {
+      /**
+       * [iy description]
+       *
+       * @ignore Exclude from docs
+       * @todo Description
+       * @return [description]
+       */
+      get: function() {
+        return sin(this.middleAngle);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Slice2.prototype, "middleAngle", {
+      /**
+       * An angle of the slice's middle.
+       *
+       * @ignore Exclude from docs
+       * @return Angle
+       */
+      get: function() {
+        return this.startAngle + this.arc / 2;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Slice2.prototype.getTooltipX = function() {
+      var value = this.getPropertyValue("tooltipX");
+      if (isNumber(value)) {
+        return value;
+      }
+      var p = 0.5;
+      if (value instanceof Percent) {
+        p = value.value;
+      }
+      var innerRadius = relativeToValue(this.innerRadius, this.radius);
+      return this.ix * (innerRadius + (this.radius - innerRadius) * p);
+    };
+    Slice2.prototype.getTooltipY = function() {
+      var value = this.getPropertyValue("tooltipY");
+      if (isNumber(value)) {
+        return value;
+      }
+      var p = 0.5;
+      if (value instanceof Percent) {
+        p = value.value;
+      }
+      var innerRadius = relativeToValue(this.innerRadius, this.radius);
+      return this.iy * (innerRadius + (this.radius - innerRadius) * p) + this.slice.dy;
+    };
+    return Slice2;
+  }(Container)
 );
+registry.registeredClasses["Slice"] = Slice;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/ResizeButton.js
+var ResizeButton = (
+  /** @class */
+  function(_super) {
+    __extends(ResizeButton2, _super);
+    function ResizeButton2() {
+      var _this = (
+        // Init
+        _super.call(this) || this
+      );
+      _this.className = "ResizeButton";
+      _this.orientation = "horizontal";
+      _this.layout = "absolute";
+      _this.horizontalCenter = "middle";
+      _this.verticalCenter = "middle";
+      _this.draggable = true;
+      _this.padding(8, 8, 8, 8);
+      _this.background.cornerRadius(20, 20, 20, 20);
+      var icon = new Sprite();
+      icon.element = _this.paper.add("path");
+      var path = moveTo({
+        x: -2,
+        y: -6
+      });
+      path += lineTo({
+        x: -2,
+        y: 6
+      });
+      path += moveTo({
+        x: 2,
+        y: -6
+      });
+      path += lineTo({
+        x: 2,
+        y: 6
+      });
+      icon.path = path;
+      icon.pixelPerfect = true;
+      icon.padding(0, 4, 0, 4);
+      icon.stroke = new InterfaceColorSet().getFor("alternativeText");
+      icon.strokeOpacity = 0.7;
+      _this.icon = icon;
+      _this.label.dispose();
+      _this.label = void 0;
+      _this.applyTheme();
+      return _this;
+    }
+    Object.defineProperty(ResizeButton2.prototype, "orientation", {
+      /**
+       * Use for setting of direction (orientation) of the resize button.
+       *
+       * Available options: "horizontal", "vertical".
+       *
+       * @param value Orientation
+       */
+      set: function(value) {
+        var icon = this.icon;
+        if (icon) {
+          if (value == "horizontal") {
+            icon.rotation = 0;
+          } else {
+            icon.rotation = -90;
+          }
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return ResizeButton2;
+  }(Button)
+);
+registry.registeredClasses["ResizeButton"] = ResizeButton;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Scrollbar.js
+var Scrollbar = (
+  /** @class */
+  function(_super) {
+    __extends(Scrollbar2, _super);
+    function Scrollbar2() {
+      var _this = _super.call(this) || this;
+      _this._previousStart = 0;
+      _this._previousEnd = 1;
+      _this._prevStart = 0;
+      _this._prevEnd = 1;
+      _this._isBusy = false;
+      _this._skipRangeEvents = false;
+      _this.updateWhileMoving = true;
+      _this.className = "Scrollbar";
+      _this.minHeight = 12;
+      _this.minWidth = 12;
+      _this.animationDuration = 0;
+      _this.animationEasing = cubicOut;
+      _this.margin(10, 10, 10, 10);
+      var interfaceColors = new InterfaceColorSet();
+      var background = _this.background;
+      background.cornerRadius(10, 10, 10, 10);
+      background.fill = interfaceColors.getFor("fill");
+      background.fillOpacity = 0.5;
+      _this.showSystemTooltip = true;
+      _this.startGrip = new ResizeButton();
+      _this.endGrip = new ResizeButton();
+      _this.events.on("transformed", function() {
+        _this.updateThumb();
+      }, _this, false);
+      _this.start = 0;
+      _this.end = 1;
+      _this.role = "scrollbar";
+      _this.thumb.role = "slider";
+      _this.thumb.readerLive = "polite";
+      _this.startGrip.role = "slider";
+      _this.endGrip.role = "slider";
+      _this.events.once("inited", function() {
+        _this._previousStart = void 0;
+        _this.dispatchRangeChange();
+      }, void 0, false);
+      _this.hideGrips = false;
+      _this.orientation = "horizontal";
+      _this.setSVGAttribute({
+        "aria-valuemin": "0"
+      });
+      _this.setSVGAttribute({
+        "aria-valuemax": "100"
+      });
+      _this.applyTheme();
+      return _this;
+    }
+    Scrollbar2.prototype.applyInternalDefaults = function() {
+      _super.prototype.applyInternalDefaults.call(this);
+      if (this.orientation === "horizontal") {
+        if (!hasValue(this.readerTitle)) {
+          this.readerTitle = this.language.translate("Use TAB to select grip buttons or left and right arrows to change selection");
+        }
+        if (!hasValue(this.thumb.readerDescription)) {
+          this.thumb.readerDescription = this.language.translate("Use left and right arrows to move selection");
+        }
+        if (!hasValue(this.startGrip.readerDescription)) {
+          this.startGrip.readerDescription = this.language.translate("Use left and right arrows to move left selection");
+        }
+        if (!hasValue(this.endGrip.readerDescription)) {
+          this.endGrip.readerDescription = this.language.translate("Use left and right arrows to move right selection");
+        }
+        this.readerOrientation = "horizontal";
+      } else {
+        if (!hasValue(this.readerTitle)) {
+          this.readerTitle = this.language.translate("Use TAB select grip buttons or up and down arrows to change selection");
+        }
+        if (!hasValue(this.thumb.readerDescription)) {
+          this.thumb.readerDescription = this.language.translate("Use up and down arrows to move selection");
+        }
+        if (!hasValue(this.startGrip.readerDescription)) {
+          this.startGrip.readerDescription = this.language.translate("Use up and down arrows to move upper selection");
+        }
+        if (!hasValue(this.endGrip.readerDescription)) {
+          this.endGrip.readerDescription = this.language.translate("Use up and down arrows to move lower selection");
+        }
+        this.readerOrientation = "vertical";
+      }
+      this.readerControls = this.baseSprite.uidAttr();
+    };
+    Scrollbar2.prototype.validateLayout = function() {
+      this.updateSize();
+      _super.prototype.validateLayout.call(this);
+      this.updateExtremes();
+    };
+    Scrollbar2.prototype.processBackground = function() {
+      _super.prototype.processBackground.call(this);
+      var background = this.background;
+      background.clickable = true;
+      background.events.on("hit", this.handleBgHit, this, void 0);
+    };
+    Scrollbar2.prototype.handleBgHit = function(event) {
+      this.makeBusy();
+      var point = event.spritePoint;
+      point = spritePointToSprite(point, this.background, this);
+      var thumb = this.thumb;
+      if (this.orientation == "horizontal") {
+        var thumbX = point.x - thumb.pixelWidth / 2;
+        thumbX = fitToRange(thumbX, 0, this.innerWidth - thumb.pixelWidth);
+        this._thumbAnimation = thumb.animate({
+          property: "x",
+          to: thumbX
+        }, this.animationDuration, this.animationEasing);
+      } else {
+        var thumbY = point.y - thumb.pixelHeight / 2;
+        thumbY = fitToRange(thumbY, 0, this.innerHeight - thumb.pixelHeight);
+        this._thumbAnimation = thumb.animate({
+          property: "y",
+          to: thumbY
+        }, this.animationDuration, this.animationEasing);
+      }
+      if (this.animationDuration > 0) {
+        this._thumbAnimation.events.on("animationended", this.makeUnbusy, this, false);
+      } else {
+        this._thumb.validate();
+        this.makeUnbusy();
+      }
+    };
+    Scrollbar2.prototype.makeBusy = function() {
+      this._isBusy = true;
+      this._skipRangeEvents = false;
+      if (this._unbusyTimeout) {
+        this.removeDispose(this._unbusyTimeout);
+      }
+      this._unbusyTimeout = void 0;
+      this.stopAnimations();
+    };
+    Scrollbar2.prototype.stopAnimations = function() {
+      if (this._thumbAnimation) {
+        this._thumbAnimation.stop(true);
+      }
+      if (this._zoomAnimation) {
+        this._zoomAnimation.stop(true);
+      }
+    };
+    Scrollbar2.prototype.makeUnbusy = function() {
+      this._unbusyTimeout = this.setTimeout(this.makeUnbusyReal.bind(this), this.animationDuration * 1.1);
+    };
+    Scrollbar2.prototype.makeUnbusyReal = function() {
+      this._usingGrip = void 0;
+      this._isBusy = false;
+      if (!this.updateWhileMoving) {
+        this.dispatchRangeChange();
+      }
+    };
+    Scrollbar2.prototype.dispatchRangeChange = function() {
+      if (this._previousEnd != this.end || this._previousStart != this.start) {
+        this._previousStart = this.start;
+        this._previousEnd = this.end;
+        this.dispatch("rangechanged");
+      }
+    };
+    Scrollbar2.prototype.updateThumb = function(dispatchEvents) {
+      if (dispatchEvents === void 0) {
+        dispatchEvents = true;
+      }
+      if (!this.parent) {
+        return;
+      }
+      var thumb = this.thumb;
+      var start = this.start;
+      var end = this.end;
+      var startGrip = this.startGrip;
+      var endGrip = this.endGrip;
+      var directionFlipped = this.adapter.apply("positionValueDirection", {
+        flipped: false
+      }).flipped;
+      var fromName = directionFlipped ? "To %1" : "From %1";
+      var toName = directionFlipped ? "From %1" : "To %1";
+      var fromValue;
+      var toValue;
+      if (this.orientation == "horizontal") {
+        var innerWidth_1 = this.innerWidth;
+        thumb.width = innerWidth_1 * (end - start);
+        thumb.maxX = innerWidth_1 - thumb.pixelWidth;
+        thumb.x = start * innerWidth_1;
+        startGrip.moveTo({
+          x: thumb.pixelX,
+          y: 0
+        }, void 0, void 0, true);
+        endGrip.moveTo({
+          x: thumb.pixelX + thumb.pixelWidth,
+          y: 0
+        }, void 0, void 0, true);
+        fromValue = this.adapter.apply("positionValue", {
+          value: Math.round(start * 100) + "%",
+          position: start
+        }).value;
+        toValue = this.adapter.apply("positionValue", {
+          value: Math.round(end * 100) + "%",
+          position: end
+        }).value;
+        startGrip.readerTitle = this.language.translate(fromName, void 0, fromValue);
+        startGrip.readerValueNow = "" + Math.round(start * 100);
+        startGrip.readerValueText = startGrip.readerTitle;
+        endGrip.readerTitle = this.language.translate(toName, void 0, toValue);
+        endGrip.readerValueNow = "" + Math.round(end * 100);
+        endGrip.readerValueText = endGrip.readerTitle;
+      } else {
+        var innerHeight_1 = this.innerHeight;
+        thumb.height = innerHeight_1 * (end - start);
+        thumb.maxY = innerHeight_1 - thumb.pixelHeight;
+        thumb.y = (1 - end) * innerHeight_1;
+        startGrip.moveTo({
+          x: 0,
+          y: thumb.pixelY + thumb.pixelHeight
+        }, void 0, void 0, true);
+        endGrip.moveTo({
+          x: 0,
+          y: thumb.pixelY
+        }, void 0, void 0, true);
+        fromValue = this.adapter.apply("positionValue", {
+          value: Math.round((1 - start) * 100) + "%",
+          position: 1 - start
+        }).value;
+        toValue = this.adapter.apply("positionValue", {
+          value: Math.round((1 - end) * 100) + "%",
+          position: 1 - end
+        }).value;
+        startGrip.readerTitle = this.language.translate(toName, void 0, fromValue);
+        startGrip.readerValueNow = "" + Math.round(start * 100);
+        startGrip.readerValueText = startGrip.readerTitle;
+        endGrip.readerTitle = this.language.translate(fromName, void 0, toValue);
+        endGrip.readerValueNow = "" + Math.round(end * 100);
+        endGrip.readerValueText = endGrip.readerTitle;
+      }
+      thumb.readerTitle = this.language.translate("From %1 to %2", void 0, fromValue, toValue);
+      thumb.readerValueNow = "" + Math.round(start * 100);
+      thumb.readerValueText = thumb.readerTitle;
+      this.readerValueNow = "" + Math.round(start * 100);
+      this.readerValueText = thumb.readerTitle;
+      if (!this._skipRangeEvents && this.updateWhileMoving && dispatchEvents) {
+        this.dispatchRangeChange();
+      }
+    };
+    Scrollbar2.prototype.updateExtremes = function() {
+      var orientation = this.orientation;
+      var minX = 0;
+      var minY = 0;
+      var maxX = 0;
+      var maxY = 0;
+      if (orientation == "horizontal") {
+        maxX = this.innerWidth;
+        minY = maxY = this.innerHeight / 2;
+      } else {
+        maxY = this.innerHeight;
+        minX = maxX = this.innerWidth / 2;
+      }
+      var startGrip = this.startGrip;
+      startGrip.minX = minX;
+      startGrip.maxX = maxX;
+      startGrip.minY = minY;
+      startGrip.maxY = maxY;
+      var endGrip = this.endGrip;
+      endGrip.minX = minX;
+      endGrip.maxX = maxX;
+      endGrip.minY = minY;
+      endGrip.maxY = maxY;
+      var thumb = this.thumb;
+      thumb.minX = minX;
+      thumb.maxX = maxX;
+      thumb.minY = minY;
+      thumb.maxY = maxY;
+    };
+    Scrollbar2.prototype.updateSize = function() {
+      var orientation = this.orientation;
+      var startGrip = this.startGrip;
+      if (startGrip) {
+        startGrip.orientation = orientation;
+      }
+      if (this.endGrip) {
+        this.endGrip.orientation = orientation;
+      }
+      var thumb = this.thumb;
+      if (thumb) {
+        if (orientation == "horizontal") {
+          if (!isNumber(this._pixelWidth)) {
+            if (!(this.width instanceof Percent)) {
+              this.width = percent(100);
+            }
+          }
+          if (hasValue(this.percentHeight)) {
+            this.height = this.minHeight;
+          }
+          thumb.height = this.innerHeight;
+          thumb.verticalCenter = "middle";
+          thumb.horizontalCenter = "left";
+        } else {
+          if (!isNumber(this._pixelHeight)) {
+            if (!(this.height instanceof Percent)) {
+              this.height = percent(100);
+            }
+          }
+          if (hasValue(this.percentWidth)) {
+            this.width = this.minWidth;
+          }
+          thumb.width = this.innerWidth;
+          thumb.verticalCenter = "top";
+          thumb.horizontalCenter = "middle";
+        }
+      }
+    };
+    Object.defineProperty(Scrollbar2.prototype, "isBusy", {
+      /**
+       * Indicates if the Scrollbar is currently "busy" (animating and or
+       * performing zoom by user interaction).
+       * @return boolean
+       */
+      get: function() {
+        return this._isBusy;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "start", {
+      /**
+       * @return Position (0-1)
+       */
+      get: function() {
+        return Math.min(this.getPosition(this._start), this.getPosition(this._end));
+      },
+      /**
+       * ==========================================================================
+       * POSITIONS
+       * ==========================================================================
+       * @hidden
+       */
+      /**
+       * Relative position (0-1) of the start grip.
+       *
+       * @param position  Position (0-1)
+       */
+      set: function(position) {
+        if (!this._isBusy) {
+          this.__start = position;
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "__start", {
+      /**
+       * @return [description]
+       */
+      get: function() {
+        return this._start;
+      },
+      /**
+       * [__start description]
+       *
+       * @todo Description
+       * @param position [description]
+       */
+      set: function(position) {
+        this._start = this.getPosition(position);
+        this.updateThumb();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "end", {
+      /**
+       * @return Position (0-1)
+       */
+      get: function() {
+        return Math.max(this.getPosition(this._start), this.getPosition(this._end));
+      },
+      /**
+       * Relative position (0-1) of the end grip.
+       *
+       * @param position  Position (0-1)
+       */
+      set: function(position) {
+        if (!this._isBusy) {
+          this.__end = position;
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "__end", {
+      /**
+       * @return [description]
+       */
+      get: function() {
+        return this._end;
+      },
+      /**
+       * [__end description]
+       *
+       * @todo Description
+       * @param position [description]
+       */
+      set: function(position) {
+        this._end = this.getPosition(position);
+        this.updateThumb();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "range", {
+      /**
+       * Current selection range.
+       *
+       * @readonly
+       * @return Range
+       */
+      get: function() {
+        return {
+          start: this.start,
+          end: this.end,
+          priority: this._usingGrip
+        };
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Scrollbar2.prototype.skipRangeEvents = function() {
+      if (!this._isBusy) {
+        this._skipRangeEvents = true;
+      }
+    };
+    Scrollbar2.prototype.fixRange = function(range) {
+      if (range.start != round(this._start, 2) || range.end != round(this._end, 2)) {
+        this._start = range.start;
+        this._end = range.end;
+        this._skipRangeEvents = true;
+        this.updateThumb();
+        this._skipRangeEvents = false;
+        this.thumb.validate();
+        this.thumb.background.validate();
+      }
+    };
+    Scrollbar2.prototype.getPosition = function(position) {
+      return fitToRange(round(position, 4), 0, 1);
+    };
+    Object.defineProperty(Scrollbar2.prototype, "orientation", {
+      /**
+       * @return Orientation
+       */
+      get: function() {
+        return this.getPropertyValue("orientation");
+      },
+      /**
+       * ==========================================================================
+       * MISC
+       * ==========================================================================
+       * @hidden
+       */
+      /**
+       * Orientation of the scrollbar.
+       *
+       * Available options: "horizontal" (default) and "vertical".
+       *
+       * @default "horizontal"
+       * @param value  Orientation
+       */
+      set: function(value) {
+        if (this.setPropertyValue("orientation", value)) {
+          if (value === "horizontal") {
+            this.startGrip.cursorOverStyle = MouseCursorStyle.horizontalResize;
+            this.endGrip.cursorOverStyle = MouseCursorStyle.horizontalResize;
+          } else {
+            this.startGrip.cursorOverStyle = MouseCursorStyle.verticalResize;
+            this.endGrip.cursorOverStyle = MouseCursorStyle.verticalResize;
+          }
+          this.updateByOrientation();
+          this.invalidate();
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Scrollbar2.prototype.updateByOrientation = function() {
+    };
+    Object.defineProperty(Scrollbar2.prototype, "startGrip", {
+      /**
+       * @return Grip element
+       */
+      get: function() {
+        return this._startGrip;
+      },
+      /**
+       * ==========================================================================
+       * GRIPS
+       * ==========================================================================
+       * @hidden
+       */
+      /**
+       * Start grip element. (button)
+       *
+       * @param button  Grip element
+       */
+      set: function(button) {
+        if (this._startGrip) {
+          this.removeDispose(this._startGrip);
+        }
+        this._startGrip = button;
+        this.processGrip(button);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "endGrip", {
+      /**
+       * @return Grip element
+       */
+      get: function() {
+        return this._endGrip;
+      },
+      /**
+       * End grip element. (button)
+       *
+       * @param button  Grip element
+       */
+      set: function(button) {
+        if (this._endGrip) {
+          this.removeDispose(this._endGrip);
+        }
+        this._endGrip = button;
+        this.processGrip(button);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Scrollbar2.prototype.processGrip = function(button) {
+      button.parent = this;
+      button.isMeasured = false;
+      button.focusable = true;
+      button.shouldClone = false;
+      button.zIndex = 100;
+      button.events.on("drag", this.handleGripDrag, this, false);
+      button.events.on("dragstop", this.makeUnbusy, this, false);
+      button.events.on("down", this.makeBusy, this, false);
+      button.events.on("up", this.makeUnbusy, this, false);
+      this._disposers.push(button);
+    };
+    Scrollbar2.prototype.handleGripDrag = function(event) {
+      this.makeBusy();
+      if (event.target === this._startGrip) {
+        this._usingGrip = "start";
+      } else {
+        this._usingGrip = "end";
+      }
+      if (this.orientation == "horizontal") {
+        this._start = this.startGrip.pixelX / this.innerWidth;
+        this._end = this.endGrip.pixelX / this.innerWidth;
+      } else {
+        this._start = 1 - this.startGrip.pixelY / this.innerHeight;
+        this._end = 1 - this.endGrip.pixelY / this.innerHeight;
+      }
+      this.updateThumb();
+    };
+    Object.defineProperty(Scrollbar2.prototype, "thumb", {
+      /**
+       * @return Thumb element
+       */
+      get: function() {
+        if (!this._thumb) {
+          var thumb = new Button();
+          thumb.background.cornerRadius(10, 10, 10, 10);
+          thumb.padding(0, 0, 0, 0);
+          this.thumb = thumb;
+        }
+        return this._thumb;
+      },
+      /**
+       * A "thumb" element.
+       *
+       * It's a draggable square space between the grips, that can be used to
+       * pan the selection.
+       *
+       * @param thumb  Thumb element
+       */
+      set: function(thumb) {
+        var _this = this;
+        if (thumb) {
+          if (this._thumb) {
+            this.removeDispose(this._thumb);
+          }
+          this._thumb = thumb;
+          thumb.parent = this;
+          thumb.isMeasured = false;
+          thumb.inert = true;
+          thumb.draggable = true;
+          thumb.clickable = true;
+          thumb.hoverable = true;
+          thumb.focusable = true;
+          thumb.shouldClone = false;
+          thumb.zIndex = 0;
+          thumb.cursorOverStyle = MouseCursorStyle.grab;
+          thumb.cursorDownStyle = MouseCursorStyle.grabbing;
+          thumb.events.on("dragstart", this.makeBusy, this, false);
+          thumb.events.on("dragstop", this.makeUnbusy, this, false);
+          thumb.events.on("positionchanged", this.handleThumbPosition, this, false);
+          thumb.events.on("sizechanged", this.handleThumbPosition, this, false);
+          thumb.events.on("doublehit", this.handleDoubleClick, this, false);
+          this._disposers.push(getInteraction().body.events.on("keyup", function(ev) {
+            if (keyboard.isKey(ev.event, ["space", "enter"]) && _this.thumb.isFocused) {
+              ev.event.preventDefault();
+              _this.handleDoubleClick();
+            }
+          }));
+          this._disposers.push(this._thumb);
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Scrollbar2.prototype.handleDoubleClick = function() {
+      this.makeBusy();
+      var newStart = 0;
+      var newEnd = 1;
+      if (this.start != 0 || this.end != 1) {
+        this._prevStart = this.start;
+        this._prevEnd = this.end;
+      } else {
+        newStart = this._prevStart;
+        newEnd = this._prevEnd;
+      }
+      var zoomAnimation = this.animate([{
+        property: "__start",
+        to: newStart
+      }, {
+        property: "__end",
+        to: newEnd
+      }], this.animationDuration, this.animationEasing);
+      if (zoomAnimation && !zoomAnimation.isFinished()) {
+        zoomAnimation.events.on("animationended", this.makeUnbusy, this, false);
+        this._zoomAnimation = zoomAnimation;
+      } else {
+        this.makeUnbusy();
+      }
+    };
+    Scrollbar2.prototype.handleThumbPosition = function() {
+      var thumb = this.thumb;
+      if (this.orientation == "horizontal") {
+        var innerWidth_2 = this.innerWidth;
+        var w = thumb.innerWidth;
+        var x = thumb.pixelX;
+        this._start = x / innerWidth_2;
+        this._end = (x + w) / innerWidth_2;
+        this.updateThumb();
+      } else {
+        var innerHeight_2 = this.innerHeight;
+        var h = thumb.innerHeight;
+        var y = thumb.pixelY;
+        if (y + h > innerHeight_2) {
+          y = innerHeight_2 - h;
+          thumb.y = y;
+        }
+        this._start = 1 - (y + h) / innerHeight_2;
+        this._end = 1 - y / innerHeight_2;
+        this.updateThumb();
+      }
+    };
+    Scrollbar2.prototype.createBackground = function() {
+      return new RoundedRectangle();
+    };
+    Object.defineProperty(Scrollbar2.prototype, "hideGrips", {
+      /**
+       * @return Show only on hover?
+       */
+      get: function() {
+        return this._hideGrips;
+      },
+      /**
+       * Use this property to set whether grips should be always visible (`false`),
+       * or they should just appear on scrollbar hover (`true`).
+       *
+       * @param value  Show only on hover?
+       */
+      set: function(value) {
+        var _this = this;
+        this._hideGrips = value;
+        if (this._overDisposer) {
+          this.removeDispose(this._overDisposer);
+        }
+        if (this._outDisposer) {
+          this.removeDispose(this._outDisposer);
+        }
+        if (value) {
+          this._overDisposer = this.events.on("over", function() {
+            _this.startGrip.show();
+            _this.endGrip.show();
+          }, void 0, false);
+          this._outDisposer = this.events.on("out", function() {
+            _this.startGrip.hide();
+            _this.endGrip.hide();
+          }, void 0, false);
+          this.startGrip.hide();
+          this.endGrip.hide();
+        } else {
+          this.startGrip.show();
+          this.endGrip.show();
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "animationDuration", {
+      /**
+       * @return Orientation
+       */
+      get: function() {
+        return this.getPropertyValue("animationDuration");
+      },
+      /**
+       * Duration in milliseconds of scrollbar animation (happens when user clicks on a background of a scrollbar)
+       * @default 0
+       * @param value number
+       */
+      set: function(value) {
+        this.setPropertyValue("animationDuration", value);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Scrollbar2.prototype, "animationEasing", {
+      /**
+       * @return {Function}
+       */
+      get: function() {
+        return this.getPropertyValue("animationEasing");
+      },
+      /**
+       * Animation easing function.
+       * @todo: review description and default
+       * @default $ease.cubicOut
+       * @param value (value: number) => number
+       */
+      set: function(value) {
+        this.setPropertyValue("animationEasing", value);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Scrollbar2.prototype.asFunction = function(field) {
+      return field == "animationEasing" || _super.prototype.asIs.call(this, field);
+    };
+    return Scrollbar2;
+  }(Container)
+);
+registry.registeredClasses["Scrollbar"] = Scrollbar;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/TextLink.js
+var TextLink = (
+  /** @class */
+  function(_super) {
+    __extends(TextLink2, _super);
+    function TextLink2() {
+      var _this = _super.call(this) || this;
+      _this.className = "TextLink";
+      _this.selectable = true;
+      var interfaceColors = new InterfaceColorSet();
+      _this.fill = interfaceColors.getFor("primaryButton").brighten(0.3);
+      var hoverState = _this.states.create("hover");
+      hoverState.properties.fill = interfaceColors.getFor("primaryButtonHover").brighten(0.3);
+      var downState = _this.states.create("down");
+      downState.properties.fill = interfaceColors.getFor("primaryButtonDown").brighten(0.3);
+      _this.cursorOverStyle = MouseCursorStyle.pointer;
+      _this.applyTheme();
+      return _this;
+    }
+    return TextLink2;
+  }(Label)
+);
+registry.registeredClasses["TextLink"] = TextLink;
 
 // node_modules/@amcharts/amcharts4/.internal/core/rendering/filters/Filter.js
 var Filter = (
@@ -31427,1250 +33290,295 @@ var Tooltip = (
 );
 registry.registeredClasses["Tooltip"] = Tooltip;
 
-// node_modules/@amcharts/amcharts4/.internal/core/elements/ResizeButton.js
-var ResizeButton = (
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Trapezoid.js
+var Trapezoid = (
   /** @class */
   function(_super) {
-    __extends(ResizeButton2, _super);
-    function ResizeButton2() {
-      var _this = (
-        // Init
-        _super.call(this) || this
-      );
-      _this.className = "ResizeButton";
-      _this.orientation = "horizontal";
-      _this.layout = "absolute";
-      _this.horizontalCenter = "middle";
-      _this.verticalCenter = "middle";
-      _this.draggable = true;
-      _this.padding(8, 8, 8, 8);
-      _this.background.cornerRadius(20, 20, 20, 20);
-      var icon = new Sprite();
-      icon.element = _this.paper.add("path");
-      var path = moveTo({
-        x: -2,
-        y: -6
-      });
-      path += lineTo({
-        x: -2,
-        y: 6
-      });
-      path += moveTo({
-        x: 2,
-        y: -6
-      });
-      path += lineTo({
-        x: 2,
-        y: 6
-      });
-      icon.path = path;
-      icon.pixelPerfect = true;
-      icon.padding(0, 4, 0, 4);
-      icon.stroke = new InterfaceColorSet().getFor("alternativeText");
-      icon.strokeOpacity = 0.7;
-      _this.icon = icon;
-      _this.label.dispose();
-      _this.label = void 0;
-      _this.applyTheme();
-      return _this;
-    }
-    Object.defineProperty(ResizeButton2.prototype, "orientation", {
-      /**
-       * Use for setting of direction (orientation) of the resize button.
-       *
-       * Available options: "horizontal", "vertical".
-       *
-       * @param value Orientation
-       */
-      set: function(value) {
-        var icon = this.icon;
-        if (icon) {
-          if (value == "horizontal") {
-            icon.rotation = 0;
-          } else {
-            icon.rotation = -90;
-          }
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return ResizeButton2;
-  }(Button)
-);
-registry.registeredClasses["ResizeButton"] = ResizeButton;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Scrollbar.js
-var Scrollbar = (
-  /** @class */
-  function(_super) {
-    __extends(Scrollbar2, _super);
-    function Scrollbar2() {
+    __extends(Trapezoid2, _super);
+    function Trapezoid2() {
       var _this = _super.call(this) || this;
-      _this._previousStart = 0;
-      _this._previousEnd = 1;
-      _this._prevStart = 0;
-      _this._prevEnd = 1;
-      _this._isBusy = false;
-      _this._skipRangeEvents = false;
-      _this.updateWhileMoving = true;
-      _this.className = "Scrollbar";
-      _this.minHeight = 12;
-      _this.minWidth = 12;
-      _this.animationDuration = 0;
-      _this.animationEasing = cubicOut;
-      _this.margin(10, 10, 10, 10);
-      var interfaceColors = new InterfaceColorSet();
-      var background = _this.background;
-      background.cornerRadius(10, 10, 10, 10);
-      background.fill = interfaceColors.getFor("fill");
-      background.fillOpacity = 0.5;
-      _this.showSystemTooltip = true;
-      _this.startGrip = new ResizeButton();
-      _this.endGrip = new ResizeButton();
-      _this.events.on("transformed", function() {
-        _this.updateThumb();
-      }, _this, false);
-      _this.start = 0;
-      _this.end = 1;
-      _this.role = "scrollbar";
-      _this.thumb.role = "slider";
-      _this.thumb.readerLive = "polite";
-      _this.startGrip.role = "slider";
-      _this.endGrip.role = "slider";
-      _this.events.once("inited", function() {
-        _this._previousStart = void 0;
-        _this.dispatchRangeChange();
-      }, void 0, false);
-      _this.hideGrips = false;
-      _this.orientation = "horizontal";
-      _this.setSVGAttribute({
-        "aria-valuemin": "0"
-      });
-      _this.setSVGAttribute({
-        "aria-valuemax": "100"
-      });
+      _this.className = "Trapezoid";
+      _this.element = _this.paper.add("path");
+      _this.topSide = percent(100);
+      _this.bottomSide = percent(100);
+      _this.leftSide = percent(100);
+      _this.rightSide = percent(100);
+      _this.isMeasured = false;
       _this.applyTheme();
       return _this;
     }
-    Scrollbar2.prototype.applyInternalDefaults = function() {
-      _super.prototype.applyInternalDefaults.call(this);
-      if (this.orientation === "horizontal") {
-        if (!hasValue(this.readerTitle)) {
-          this.readerTitle = this.language.translate("Use TAB to select grip buttons or left and right arrows to change selection");
-        }
-        if (!hasValue(this.thumb.readerDescription)) {
-          this.thumb.readerDescription = this.language.translate("Use left and right arrows to move selection");
-        }
-        if (!hasValue(this.startGrip.readerDescription)) {
-          this.startGrip.readerDescription = this.language.translate("Use left and right arrows to move left selection");
-        }
-        if (!hasValue(this.endGrip.readerDescription)) {
-          this.endGrip.readerDescription = this.language.translate("Use left and right arrows to move right selection");
-        }
-        this.readerOrientation = "horizontal";
-      } else {
-        if (!hasValue(this.readerTitle)) {
-          this.readerTitle = this.language.translate("Use TAB select grip buttons or up and down arrows to change selection");
-        }
-        if (!hasValue(this.thumb.readerDescription)) {
-          this.thumb.readerDescription = this.language.translate("Use up and down arrows to move selection");
-        }
-        if (!hasValue(this.startGrip.readerDescription)) {
-          this.startGrip.readerDescription = this.language.translate("Use up and down arrows to move upper selection");
-        }
-        if (!hasValue(this.endGrip.readerDescription)) {
-          this.endGrip.readerDescription = this.language.translate("Use up and down arrows to move lower selection");
-        }
-        this.readerOrientation = "vertical";
-      }
-      this.readerControls = this.baseSprite.uidAttr();
-    };
-    Scrollbar2.prototype.validateLayout = function() {
-      this.updateSize();
-      _super.prototype.validateLayout.call(this);
-      this.updateExtremes();
-    };
-    Scrollbar2.prototype.processBackground = function() {
-      _super.prototype.processBackground.call(this);
-      var background = this.background;
-      background.clickable = true;
-      background.events.on("hit", this.handleBgHit, this, void 0);
-    };
-    Scrollbar2.prototype.handleBgHit = function(event) {
-      this.makeBusy();
-      var point = event.spritePoint;
-      point = spritePointToSprite(point, this.background, this);
-      var thumb = this.thumb;
-      if (this.orientation == "horizontal") {
-        var thumbX = point.x - thumb.pixelWidth / 2;
-        thumbX = fitToRange(thumbX, 0, this.innerWidth - thumb.pixelWidth);
-        this._thumbAnimation = thumb.animate({
-          property: "x",
-          to: thumbX
-        }, this.animationDuration, this.animationEasing);
-      } else {
-        var thumbY = point.y - thumb.pixelHeight / 2;
-        thumbY = fitToRange(thumbY, 0, this.innerHeight - thumb.pixelHeight);
-        this._thumbAnimation = thumb.animate({
-          property: "y",
-          to: thumbY
-        }, this.animationDuration, this.animationEasing);
-      }
-      if (this.animationDuration > 0) {
-        this._thumbAnimation.events.on("animationended", this.makeUnbusy, this, false);
-      } else {
-        this._thumb.validate();
-        this.makeUnbusy();
-      }
-    };
-    Scrollbar2.prototype.makeBusy = function() {
-      this._isBusy = true;
-      this._skipRangeEvents = false;
-      if (this._unbusyTimeout) {
-        this.removeDispose(this._unbusyTimeout);
-      }
-      this._unbusyTimeout = void 0;
-      this.stopAnimations();
-    };
-    Scrollbar2.prototype.stopAnimations = function() {
-      if (this._thumbAnimation) {
-        this._thumbAnimation.stop(true);
-      }
-      if (this._zoomAnimation) {
-        this._zoomAnimation.stop(true);
-      }
-    };
-    Scrollbar2.prototype.makeUnbusy = function() {
-      this._unbusyTimeout = this.setTimeout(this.makeUnbusyReal.bind(this), this.animationDuration * 1.1);
-    };
-    Scrollbar2.prototype.makeUnbusyReal = function() {
-      this._usingGrip = void 0;
-      this._isBusy = false;
-      if (!this.updateWhileMoving) {
-        this.dispatchRangeChange();
-      }
-    };
-    Scrollbar2.prototype.dispatchRangeChange = function() {
-      if (this._previousEnd != this.end || this._previousStart != this.start) {
-        this._previousStart = this.start;
-        this._previousEnd = this.end;
-        this.dispatch("rangechanged");
-      }
-    };
-    Scrollbar2.prototype.updateThumb = function(dispatchEvents) {
-      if (dispatchEvents === void 0) {
-        dispatchEvents = true;
-      }
-      if (!this.parent) {
-        return;
-      }
-      var thumb = this.thumb;
-      var start = this.start;
-      var end = this.end;
-      var startGrip = this.startGrip;
-      var endGrip = this.endGrip;
-      var directionFlipped = this.adapter.apply("positionValueDirection", {
-        flipped: false
-      }).flipped;
-      var fromName = directionFlipped ? "To %1" : "From %1";
-      var toName = directionFlipped ? "From %1" : "To %1";
-      var fromValue;
-      var toValue;
-      if (this.orientation == "horizontal") {
-        var innerWidth_1 = this.innerWidth;
-        thumb.width = innerWidth_1 * (end - start);
-        thumb.maxX = innerWidth_1 - thumb.pixelWidth;
-        thumb.x = start * innerWidth_1;
-        startGrip.moveTo({
-          x: thumb.pixelX,
-          y: 0
-        }, void 0, void 0, true);
-        endGrip.moveTo({
-          x: thumb.pixelX + thumb.pixelWidth,
-          y: 0
-        }, void 0, void 0, true);
-        fromValue = this.adapter.apply("positionValue", {
-          value: Math.round(start * 100) + "%",
-          position: start
-        }).value;
-        toValue = this.adapter.apply("positionValue", {
-          value: Math.round(end * 100) + "%",
-          position: end
-        }).value;
-        startGrip.readerTitle = this.language.translate(fromName, void 0, fromValue);
-        startGrip.readerValueNow = "" + Math.round(start * 100);
-        startGrip.readerValueText = startGrip.readerTitle;
-        endGrip.readerTitle = this.language.translate(toName, void 0, toValue);
-        endGrip.readerValueNow = "" + Math.round(end * 100);
-        endGrip.readerValueText = endGrip.readerTitle;
-      } else {
-        var innerHeight_1 = this.innerHeight;
-        thumb.height = innerHeight_1 * (end - start);
-        thumb.maxY = innerHeight_1 - thumb.pixelHeight;
-        thumb.y = (1 - end) * innerHeight_1;
-        startGrip.moveTo({
-          x: 0,
-          y: thumb.pixelY + thumb.pixelHeight
-        }, void 0, void 0, true);
-        endGrip.moveTo({
-          x: 0,
-          y: thumb.pixelY
-        }, void 0, void 0, true);
-        fromValue = this.adapter.apply("positionValue", {
-          value: Math.round((1 - start) * 100) + "%",
-          position: 1 - start
-        }).value;
-        toValue = this.adapter.apply("positionValue", {
-          value: Math.round((1 - end) * 100) + "%",
-          position: 1 - end
-        }).value;
-        startGrip.readerTitle = this.language.translate(toName, void 0, fromValue);
-        startGrip.readerValueNow = "" + Math.round(start * 100);
-        startGrip.readerValueText = startGrip.readerTitle;
-        endGrip.readerTitle = this.language.translate(fromName, void 0, toValue);
-        endGrip.readerValueNow = "" + Math.round(end * 100);
-        endGrip.readerValueText = endGrip.readerTitle;
-      }
-      thumb.readerTitle = this.language.translate("From %1 to %2", void 0, fromValue, toValue);
-      thumb.readerValueNow = "" + Math.round(start * 100);
-      thumb.readerValueText = thumb.readerTitle;
-      this.readerValueNow = "" + Math.round(start * 100);
-      this.readerValueText = thumb.readerTitle;
-      if (!this._skipRangeEvents && this.updateWhileMoving && dispatchEvents) {
-        this.dispatchRangeChange();
-      }
-    };
-    Scrollbar2.prototype.updateExtremes = function() {
-      var orientation = this.orientation;
-      var minX = 0;
-      var minY = 0;
-      var maxX = 0;
-      var maxY = 0;
-      if (orientation == "horizontal") {
-        maxX = this.innerWidth;
-        minY = maxY = this.innerHeight / 2;
-      } else {
-        maxY = this.innerHeight;
-        minX = maxX = this.innerWidth / 2;
-      }
-      var startGrip = this.startGrip;
-      startGrip.minX = minX;
-      startGrip.maxX = maxX;
-      startGrip.minY = minY;
-      startGrip.maxY = maxY;
-      var endGrip = this.endGrip;
-      endGrip.minX = minX;
-      endGrip.maxX = maxX;
-      endGrip.minY = minY;
-      endGrip.maxY = maxY;
-      var thumb = this.thumb;
-      thumb.minX = minX;
-      thumb.maxX = maxX;
-      thumb.minY = minY;
-      thumb.maxY = maxY;
-    };
-    Scrollbar2.prototype.updateSize = function() {
-      var orientation = this.orientation;
-      var startGrip = this.startGrip;
-      if (startGrip) {
-        startGrip.orientation = orientation;
-      }
-      if (this.endGrip) {
-        this.endGrip.orientation = orientation;
-      }
-      var thumb = this.thumb;
-      if (thumb) {
-        if (orientation == "horizontal") {
-          if (!isNumber(this._pixelWidth)) {
-            if (!(this.width instanceof Percent)) {
-              this.width = percent(100);
-            }
-          }
-          if (hasValue(this.percentHeight)) {
-            this.height = this.minHeight;
-          }
-          thumb.height = this.innerHeight;
-          thumb.verticalCenter = "middle";
-          thumb.horizontalCenter = "left";
-        } else {
-          if (!isNumber(this._pixelHeight)) {
-            if (!(this.height instanceof Percent)) {
-              this.height = percent(100);
-            }
-          }
-          if (hasValue(this.percentWidth)) {
-            this.width = this.minWidth;
-          }
-          thumb.width = this.innerWidth;
-          thumb.verticalCenter = "top";
-          thumb.horizontalCenter = "middle";
-        }
-      }
-    };
-    Object.defineProperty(Scrollbar2.prototype, "isBusy", {
-      /**
-       * Indicates if the Scrollbar is currently "busy" (animating and or
-       * performing zoom by user interaction).
-       * @return boolean
-       */
-      get: function() {
-        return this._isBusy;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "start", {
-      /**
-       * @return Position (0-1)
-       */
-      get: function() {
-        return Math.min(this.getPosition(this._start), this.getPosition(this._end));
-      },
-      /**
-       * ==========================================================================
-       * POSITIONS
-       * ==========================================================================
-       * @hidden
-       */
-      /**
-       * Relative position (0-1) of the start grip.
-       *
-       * @param position  Position (0-1)
-       */
-      set: function(position) {
-        if (!this._isBusy) {
-          this.__start = position;
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "__start", {
-      /**
-       * @return [description]
-       */
-      get: function() {
-        return this._start;
-      },
-      /**
-       * [__start description]
-       *
-       * @todo Description
-       * @param position [description]
-       */
-      set: function(position) {
-        this._start = this.getPosition(position);
-        this.updateThumb();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "end", {
-      /**
-       * @return Position (0-1)
-       */
-      get: function() {
-        return Math.max(this.getPosition(this._start), this.getPosition(this._end));
-      },
-      /**
-       * Relative position (0-1) of the end grip.
-       *
-       * @param position  Position (0-1)
-       */
-      set: function(position) {
-        if (!this._isBusy) {
-          this.__end = position;
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "__end", {
-      /**
-       * @return [description]
-       */
-      get: function() {
-        return this._end;
-      },
-      /**
-       * [__end description]
-       *
-       * @todo Description
-       * @param position [description]
-       */
-      set: function(position) {
-        this._end = this.getPosition(position);
-        this.updateThumb();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "range", {
-      /**
-       * Current selection range.
-       *
-       * @readonly
-       * @return Range
-       */
-      get: function() {
-        return {
-          start: this.start,
-          end: this.end,
-          priority: this._usingGrip
-        };
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Scrollbar2.prototype.skipRangeEvents = function() {
-      if (!this._isBusy) {
-        this._skipRangeEvents = true;
-      }
-    };
-    Scrollbar2.prototype.fixRange = function(range) {
-      if (range.start != round(this._start, 2) || range.end != round(this._end, 2)) {
-        this._start = range.start;
-        this._end = range.end;
-        this._skipRangeEvents = true;
-        this.updateThumb();
-        this._skipRangeEvents = false;
-        this.thumb.validate();
-        this.thumb.background.validate();
-      }
-    };
-    Scrollbar2.prototype.getPosition = function(position) {
-      return fitToRange(round(position, 4), 0, 1);
-    };
-    Object.defineProperty(Scrollbar2.prototype, "orientation", {
-      /**
-       * @return Orientation
-       */
-      get: function() {
-        return this.getPropertyValue("orientation");
-      },
-      /**
-       * ==========================================================================
-       * MISC
-       * ==========================================================================
-       * @hidden
-       */
-      /**
-       * Orientation of the scrollbar.
-       *
-       * Available options: "horizontal" (default) and "vertical".
-       *
-       * @default "horizontal"
-       * @param value  Orientation
-       */
-      set: function(value) {
-        if (this.setPropertyValue("orientation", value)) {
-          if (value === "horizontal") {
-            this.startGrip.cursorOverStyle = MouseCursorStyle.horizontalResize;
-            this.endGrip.cursorOverStyle = MouseCursorStyle.horizontalResize;
-          } else {
-            this.startGrip.cursorOverStyle = MouseCursorStyle.verticalResize;
-            this.endGrip.cursorOverStyle = MouseCursorStyle.verticalResize;
-          }
-          this.updateByOrientation();
-          this.invalidate();
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Scrollbar2.prototype.updateByOrientation = function() {
-    };
-    Object.defineProperty(Scrollbar2.prototype, "startGrip", {
-      /**
-       * @return Grip element
-       */
-      get: function() {
-        return this._startGrip;
-      },
-      /**
-       * ==========================================================================
-       * GRIPS
-       * ==========================================================================
-       * @hidden
-       */
-      /**
-       * Start grip element. (button)
-       *
-       * @param button  Grip element
-       */
-      set: function(button) {
-        if (this._startGrip) {
-          this.removeDispose(this._startGrip);
-        }
-        this._startGrip = button;
-        this.processGrip(button);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "endGrip", {
-      /**
-       * @return Grip element
-       */
-      get: function() {
-        return this._endGrip;
-      },
-      /**
-       * End grip element. (button)
-       *
-       * @param button  Grip element
-       */
-      set: function(button) {
-        if (this._endGrip) {
-          this.removeDispose(this._endGrip);
-        }
-        this._endGrip = button;
-        this.processGrip(button);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Scrollbar2.prototype.processGrip = function(button) {
-      button.parent = this;
-      button.isMeasured = false;
-      button.focusable = true;
-      button.shouldClone = false;
-      button.zIndex = 100;
-      button.events.on("drag", this.handleGripDrag, this, false);
-      button.events.on("dragstop", this.makeUnbusy, this, false);
-      button.events.on("down", this.makeBusy, this, false);
-      button.events.on("up", this.makeUnbusy, this, false);
-      this._disposers.push(button);
-    };
-    Scrollbar2.prototype.handleGripDrag = function(event) {
-      this.makeBusy();
-      if (event.target === this._startGrip) {
-        this._usingGrip = "start";
-      } else {
-        this._usingGrip = "end";
-      }
-      if (this.orientation == "horizontal") {
-        this._start = this.startGrip.pixelX / this.innerWidth;
-        this._end = this.endGrip.pixelX / this.innerWidth;
-      } else {
-        this._start = 1 - this.startGrip.pixelY / this.innerHeight;
-        this._end = 1 - this.endGrip.pixelY / this.innerHeight;
-      }
-      this.updateThumb();
-    };
-    Object.defineProperty(Scrollbar2.prototype, "thumb", {
-      /**
-       * @return Thumb element
-       */
-      get: function() {
-        if (!this._thumb) {
-          var thumb = new Button();
-          thumb.background.cornerRadius(10, 10, 10, 10);
-          thumb.padding(0, 0, 0, 0);
-          this.thumb = thumb;
-        }
-        return this._thumb;
-      },
-      /**
-       * A "thumb" element.
-       *
-       * It's a draggable square space between the grips, that can be used to
-       * pan the selection.
-       *
-       * @param thumb  Thumb element
-       */
-      set: function(thumb) {
-        var _this = this;
-        if (thumb) {
-          if (this._thumb) {
-            this.removeDispose(this._thumb);
-          }
-          this._thumb = thumb;
-          thumb.parent = this;
-          thumb.isMeasured = false;
-          thumb.inert = true;
-          thumb.draggable = true;
-          thumb.clickable = true;
-          thumb.hoverable = true;
-          thumb.focusable = true;
-          thumb.shouldClone = false;
-          thumb.zIndex = 0;
-          thumb.cursorOverStyle = MouseCursorStyle.grab;
-          thumb.cursorDownStyle = MouseCursorStyle.grabbing;
-          thumb.events.on("dragstart", this.makeBusy, this, false);
-          thumb.events.on("dragstop", this.makeUnbusy, this, false);
-          thumb.events.on("positionchanged", this.handleThumbPosition, this, false);
-          thumb.events.on("sizechanged", this.handleThumbPosition, this, false);
-          thumb.events.on("doublehit", this.handleDoubleClick, this, false);
-          this._disposers.push(getInteraction().body.events.on("keyup", function(ev) {
-            if (keyboard.isKey(ev.event, ["space", "enter"]) && _this.thumb.isFocused) {
-              ev.event.preventDefault();
-              _this.handleDoubleClick();
-            }
-          }));
-          this._disposers.push(this._thumb);
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Scrollbar2.prototype.handleDoubleClick = function() {
-      this.makeBusy();
-      var newStart = 0;
-      var newEnd = 1;
-      if (this.start != 0 || this.end != 1) {
-        this._prevStart = this.start;
-        this._prevEnd = this.end;
-      } else {
-        newStart = this._prevStart;
-        newEnd = this._prevEnd;
-      }
-      var zoomAnimation = this.animate([{
-        property: "__start",
-        to: newStart
-      }, {
-        property: "__end",
-        to: newEnd
-      }], this.animationDuration, this.animationEasing);
-      if (zoomAnimation && !zoomAnimation.isFinished()) {
-        zoomAnimation.events.on("animationended", this.makeUnbusy, this, false);
-        this._zoomAnimation = zoomAnimation;
-      } else {
-        this.makeUnbusy();
-      }
-    };
-    Scrollbar2.prototype.handleThumbPosition = function() {
-      var thumb = this.thumb;
-      if (this.orientation == "horizontal") {
-        var innerWidth_2 = this.innerWidth;
-        var w = thumb.innerWidth;
-        var x = thumb.pixelX;
-        this._start = x / innerWidth_2;
-        this._end = (x + w) / innerWidth_2;
-        this.updateThumb();
-      } else {
-        var innerHeight_2 = this.innerHeight;
-        var h = thumb.innerHeight;
-        var y = thumb.pixelY;
-        if (y + h > innerHeight_2) {
-          y = innerHeight_2 - h;
-          thumb.y = y;
-        }
-        this._start = 1 - (y + h) / innerHeight_2;
-        this._end = 1 - y / innerHeight_2;
-        this.updateThumb();
-      }
-    };
-    Scrollbar2.prototype.createBackground = function() {
-      return new RoundedRectangle();
-    };
-    Object.defineProperty(Scrollbar2.prototype, "hideGrips", {
-      /**
-       * @return Show only on hover?
-       */
-      get: function() {
-        return this._hideGrips;
-      },
-      /**
-       * Use this property to set whether grips should be always visible (`false`),
-       * or they should just appear on scrollbar hover (`true`).
-       *
-       * @param value  Show only on hover?
-       */
-      set: function(value) {
-        var _this = this;
-        this._hideGrips = value;
-        if (this._overDisposer) {
-          this.removeDispose(this._overDisposer);
-        }
-        if (this._outDisposer) {
-          this.removeDispose(this._outDisposer);
-        }
-        if (value) {
-          this._overDisposer = this.events.on("over", function() {
-            _this.startGrip.show();
-            _this.endGrip.show();
-          }, void 0, false);
-          this._outDisposer = this.events.on("out", function() {
-            _this.startGrip.hide();
-            _this.endGrip.hide();
-          }, void 0, false);
-          this.startGrip.hide();
-          this.endGrip.hide();
-        } else {
-          this.startGrip.show();
-          this.endGrip.show();
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "animationDuration", {
-      /**
-       * @return Orientation
-       */
-      get: function() {
-        return this.getPropertyValue("animationDuration");
-      },
-      /**
-       * Duration in milliseconds of scrollbar animation (happens when user clicks on a background of a scrollbar)
-       * @default 0
-       * @param value number
-       */
-      set: function(value) {
-        this.setPropertyValue("animationDuration", value);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Scrollbar2.prototype, "animationEasing", {
-      /**
-       * @return {Function}
-       */
-      get: function() {
-        return this.getPropertyValue("animationEasing");
-      },
-      /**
-       * Animation easing function.
-       * @todo: review description and default
-       * @default $ease.cubicOut
-       * @param value (value: number) => number
-       */
-      set: function(value) {
-        this.setPropertyValue("animationEasing", value);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Scrollbar2.prototype.asFunction = function(field) {
-      return field == "animationEasing" || _super.prototype.asIs.call(this, field);
-    };
-    return Scrollbar2;
-  }(Container)
-);
-registry.registeredClasses["Scrollbar"] = Scrollbar;
-
-// node_modules/@amcharts/amcharts4/.internal/core/utils/ColorSet.js
-var ColorSet = (
-  /** @class */
-  function(_super) {
-    __extends(ColorSet2, _super);
-    function ColorSet2() {
-      var _this = _super.call(this) || this;
-      _this._list = [];
-      _this._currentStep = 0;
-      _this._startIndex = 0;
-      _this._currentPass = 0;
-      _this.baseColor = new Color({
-        r: 103,
-        g: 183,
-        b: 220
-      });
-      _this.stepOptions = {};
-      _this.passOptions = {
-        brighten: -0.2
-      };
-      _this.step = 1;
-      _this.minColors = 20;
-      _this.minLightness = 0.2;
-      _this.maxLightness = 0.9;
-      _this.shuffle = false;
-      _this.wrap = true;
-      _this.reuse = false;
-      _this.saturation = 1;
-      _this.className = "ColorSet";
-      _this.applyTheme();
-      return _this;
-    }
-    Object.defineProperty(ColorSet2.prototype, "list", {
-      /**
-       * Returns current list of colors.
-       *
-       * If there are none, a new list of colors is generated, based on various
-       * ColorSet settings.
-       *
-       * @return Color list
-       */
-      get: function() {
-        if (!this._list) {
-          this.generate(this.minColors);
-        }
-        return this._list;
-      },
-      /**
-       * Sets a list of pre-defined colors to use for the iterator.
-       *
-       * @param value Color list
-       */
-      set: function(value) {
-        this._list = value;
-        this.reset();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    ColorSet2.prototype.getReusableColor = function(index) {
-      if (this._list.length == 0) {
-        this.generate(1);
-        return this.list[0];
-      } else {
-        var tmpstep = index - Math.floor(index / this._list.length) * this.list.length;
-        return this.list[tmpstep];
-      }
-    };
-    ColorSet2.prototype.next = function() {
-      var color2;
-      if (this.list.length <= this._currentStep) {
-        if (this.reuse) {
-          color2 = this.getReusableColor(this._currentStep);
-        } else {
-          this.generate(max(this.minColors, this._currentStep + 1));
-          color2 = this.list[this._currentStep];
-        }
-      } else {
-        color2 = this.list[this._currentStep];
-      }
-      this._currentStep += this.step;
-      return color2.saturate(this.saturation);
-    };
-    ColorSet2.prototype.getIndex = function(i) {
-      var color2;
-      if (this.list.length <= i) {
-        if (this.reuse) {
-          color2 = this.getReusableColor(i);
-        } else {
-          this.generate(this.minColors);
-          color2 = this.getIndex(i);
-        }
-      } else {
-        color2 = this.list[i];
-      }
-      return color2.saturate(this.saturation);
-    };
-    ColorSet2.prototype.reset = function() {
-      this._currentStep = this._startIndex;
-    };
-    Object.defineProperty(ColorSet2.prototype, "currentStep", {
-      /**
-       * @return Step
-       */
-      get: function() {
-        return this._currentStep;
-      },
-      /**
-       * Sets current color iteration. You can use this property to skip some
-       * colors from iteration. E.g. setting it to `10` will skip first ten
-       * colors.
-       *
-       * Please note that the number is zero-based.
-       *
-       * @param value  Step
-       */
-      set: function(value) {
-        this._currentStep = value;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(ColorSet2.prototype, "startIndex", {
-      /**
-       * @return Index
-       */
-      get: function() {
-        return this._startIndex;
-      },
-      /**
-       * If set to non-zero value, the ColorSet will start iterating colors from
-       * that particular index, not the first color in the list.
-       *
-       * @default 0
-       * @since 4.4.9
-       * @param  value  Index
-       */
-      set: function(value) {
-        this._startIndex = value;
-        this.reset();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    ColorSet2.prototype.generate = function(count) {
-      var curColor = this.currentColor;
-      var hsl = rgbToHsl(getValue(curColor.rgb));
-      var hueStep = hasValue(this.stepOptions.hue) ? this.stepOptions.hue : 1 / count;
-      var mods = {
-        brighten: 0,
-        lighten: 0,
-        hue: hsl.h,
-        lightness: hsl.l,
-        saturation: hsl.s
-      };
-      var hues = [];
-      var startIndex = this.list.length == 0 ? 0 : 1;
-      if (this.reuse) {
-        for (var i = startIndex; i <= count; i++) {
-          hues.push(rgbToHsl(getValue(this._list[i].rgb)).h);
-        }
-      } else {
-        for (var i = startIndex; i <= count; i++) {
-          var h = hsl.h + hueStep * i;
-          if (this.wrap && h > 1) {
-            h -= 1;
-          }
-          hues.push(h);
-        }
-      }
-      if (this.shuffle) {
-        hues.sort(function(a, b) {
-          return Math.random() - 0.5;
-        });
-      }
-      for (var i = 0; i < count; i++) {
-        if (this.reuse) {
-          hsl = rgbToHsl(getValue(this._list[i].rgb));
-        } else {
-          hsl.h = hues.shift();
-        }
-        this.applyStepOptions(hsl, mods, i, this._currentPass);
-        var c = color(hslToRgb(hsl));
-        var brighten = (this.stepOptions.brighten || 0) * i + (this.passOptions.brighten || 0) * this._currentPass;
-        if (brighten != 0) {
-          if (this.wrap) {
-            brighten = fitNumberRelative(brighten, this.minLightness, this.maxLightness);
-          } else {
-            brighten = fitNumber(brighten, this.minLightness, this.maxLightness);
-          }
-          c = c.brighten(brighten);
-        }
-        var lighten = (this.stepOptions.lighten || 0) * i + (this.passOptions.lighten || 0) * this._currentPass;
-        if (lighten != 0) {
-          if (this.wrap) {
-            lighten = fitNumberRelative(lighten, this.minLightness, this.maxLightness);
-          } else {
-            lighten = fitNumber(lighten, this.minLightness, this.maxLightness);
-          }
-          c = c.lighten(lighten);
-        }
-        this._list.push(c);
-      }
-      this._currentPass++;
-    };
-    Object.defineProperty(ColorSet2.prototype, "currentColor", {
-      /**
-       * Returns current last color. It's either the last color in the list of
-       * colors, or `baseColor` if list is empty.
-       *
-       * @return Color
-       */
-      get: function() {
-        if (this._list.length == 0) {
-          return this.baseColor.saturate(this.saturation);
-        } else {
-          return this._list[this._list.length - 1].saturate(this.saturation);
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    ColorSet2.prototype.applyStepOptions = function(hsl, base, step, pass) {
-      hsl.l = base.lightness + (this.stepOptions.lightness || 0) * step + (this.passOptions.lightness || 0) * pass;
-      if (this.wrap) {
-        if (hsl.l > 1) {
-          hsl.l = hsl.l - Math.floor(hsl.l);
-        } else if (hsl.l < 0) {
-          hsl.l = -(hsl.l - Math.floor(hsl.l));
-        }
-        hsl.l = fitNumberRelative(hsl.l, this.minLightness, this.maxLightness);
-      } else {
-        if (hsl.l > 1) {
-          hsl.l = 1;
-        } else if (hsl.l < 0) {
-          hsl.l = 0;
-        }
-        hsl.l = fitNumber(hsl.l, this.minLightness, this.maxLightness);
-      }
-    };
-    ColorSet2.prototype.processConfig = function(config) {
-      if (config) {
-        if (hasValue(config.list) && isArray(config.list)) {
-          for (var i = 0, len = config.list.length; i < len; i++) {
-            if (!(config.list[i] instanceof Color)) {
-              config.list[i] = color(config.list[i]);
-            }
-          }
-        }
-        if (hasValue(config.baseColor) && !(config.baseColor instanceof Color)) {
-          config.baseColor = color(config.baseColor);
-        }
-      }
-      _super.prototype.processConfig.call(this, config);
-    };
-    return ColorSet2;
-  }(BaseObject)
-);
-registry.registeredClasses["ColorSet"] = ColorSet;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Line.js
-var Line = (
-  /** @class */
-  function(_super) {
-    __extends(Line2, _super);
-    function Line2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Line";
-      _this.element = _this.paper.add("line");
-      _this.fill = color();
-      _this.x1 = 0;
-      _this.y1 = 0;
-      _this.applyTheme();
-      return _this;
-    }
-    Line2.prototype.draw = function() {
+    Trapezoid2.prototype.draw = function() {
       _super.prototype.draw.call(this);
-      if (this.x1 == this.x2 || this.y1 == this.y2) {
-        this.pixelPerfect = true;
-      } else {
-        this.pixelPerfect = false;
+      var w = this.pixelWidth;
+      var h = this.pixelHeight;
+      var ts = relativeToValue(this.topSide, w);
+      var bs = relativeToValue(this.bottomSide, w);
+      var ls = relativeToValue(this.leftSide, h);
+      var rs = relativeToValue(this.rightSide, h);
+      var x0 = (w - ts) / 2;
+      var y0 = (h - ls) / 2;
+      var x1 = w - (w - ts) / 2;
+      var y1 = (h - rs) / 2;
+      var x2 = w - (w - bs) / 2;
+      var y2 = h - (h - rs) / 2;
+      var x3 = (w - bs) / 2;
+      var y3 = h - (h - ls) / 2;
+      var mt = "";
+      var mr = "";
+      var mb = "";
+      var ml = "";
+      if (hasValue(this.horizontalNeck)) {
+        var hn = this.horizontalNeck.value;
+        mt = lineTo({
+          x: w * hn,
+          y: Math.max(y0, y1)
+        });
+        mb = lineTo({
+          x: w * hn,
+          y: Math.min(y2, y3)
+        });
       }
-      this.x1 = this.x1;
-      this.x2 = this.x2;
-      this.y1 = this.y1;
-      this.y2 = this.y2;
+      if (hasValue(this.verticalNeck)) {
+        var vn = this.verticalNeck.value;
+        mr = lineTo({
+          x: Math.min(x1, x2),
+          y: h * vn
+        });
+        ml = lineTo({
+          x: Math.max(x0, x3),
+          y: h * vn
+        });
+      }
+      var path = moveTo({
+        x: x0,
+        y: y0
+      }) + mt + lineTo({
+        x: x1,
+        y: y1
+      }) + mr + lineTo({
+        x: x2,
+        y: y2
+      }) + mb + lineTo({
+        x: x3,
+        y: y3
+      }) + ml;
+      this.path = path;
     };
-    Object.defineProperty(Line2.prototype, "x1", {
+    Object.defineProperty(Trapezoid2.prototype, "topSide", {
       /**
-       * @return X
+       * @return Width
        */
       get: function() {
-        return this.getPropertyValue("x1");
+        return this.getPropertyValue("topSide");
       },
       /**
-       * X coordinate of first end.
+       * Wdith of the top side. Absolute (px) or relative ([[Percent]]).
        *
-       * @param value X
+       * @default Percent(100)
+       * @param value  Width
        */
       set: function(value) {
-        if (!isNumber(value)) {
-          value = 0;
-        }
-        var delta = 0;
-        if (this.pixelPerfect && this.stroke instanceof LinearGradient) {
-          delta = 1e-5;
-        }
-        this.setPropertyValue("x1", value, true);
-        this.element.attr({
-          "x1": value + delta
-        });
+        this.setPercentProperty("topSide", value, true, false, 10, false);
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Line2.prototype, "x2", {
+    Object.defineProperty(Trapezoid2.prototype, "bottomSide", {
       /**
-       * @return X
+       * @return Width
        */
       get: function() {
-        var value = this.getPropertyValue("x2");
-        if (!isNumber(value)) {
-          value = this.pixelWidth;
-        }
-        return value;
+        return this.getPropertyValue("bottomSide");
       },
       /**
-       * X coordinate of second end.
+       * Wdith of the bottom side. Absolute (px) or relative ([[Percent]]).
        *
-       * @param value X
+       * @default Percent(100)
+       * @param value  Width
        */
       set: function(value) {
-        if (!isNumber(value)) {
-          value = 0;
-        }
-        this.setPropertyValue("x2", value, true);
-        this.element.attr({
-          "x2": value
-        });
+        this.setPercentProperty("bottomSide", value, true, false, 10, false);
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Line2.prototype, "y1", {
+    Object.defineProperty(Trapezoid2.prototype, "leftSide", {
       /**
-       * @return Y
+       * @return Height
        */
       get: function() {
-        return this.getPropertyValue("y1");
+        return this.getPropertyValue("leftSide");
       },
       /**
-       * Y coordinate of first end.
+       * Height of the left side. Absolute (px) or relative ([[Percent]]).
        *
-       * @param value Y
+       * @default Percent(100)
+       * @param value  Height
        */
       set: function(value) {
-        if (!isNumber(value)) {
-          value = 0;
-        }
-        var delta = 0;
-        if (this.pixelPerfect && this.stroke instanceof LinearGradient) {
-          delta = 1e-5;
-        }
-        this.setPropertyValue("y1", value, true);
-        this.element.attr({
-          "y1": value + delta
-        });
+        this.setPercentProperty("leftSide", value, true, false, 10, false);
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Line2.prototype, "y2", {
+    Object.defineProperty(Trapezoid2.prototype, "rightSide", {
       /**
-       * @return Y
+       * @return Height
        */
       get: function() {
-        var value = this.getPropertyValue("y2");
-        if (!isNumber(value)) {
-          value = this.pixelHeight;
-        }
-        return value;
+        return this.getPropertyValue("rightSide");
       },
       /**
-       * Y coordinate of second end.
+       * Height of the right side. Absolute (px) or relative ([[Percent]]).
        *
-       * @param value Y
+       * @default Percent(100)
+       * @param value  Height
        */
       set: function(value) {
-        if (!isNumber(value)) {
-          value = 0;
-        }
-        this.setPropertyValue("y2", value, true);
-        this.element.attr({
-          "y2": value
-        });
+        this.setPercentProperty("rightSide", value, true, false, 10, false);
       },
       enumerable: true,
       configurable: true
     });
-    Line2.prototype.positionToPoint = function(position) {
-      var point1 = {
-        x: this.x1,
-        y: this.y1
-      };
-      var point2 = {
-        x: this.x2,
-        y: this.y2
-      };
-      var point = getMidPoint(point1, point2, position);
-      var angle = getAngle(point1, point2);
-      return {
-        x: point.x,
-        y: point.y,
-        angle
-      };
-    };
-    return Line2;
+    Object.defineProperty(Trapezoid2.prototype, "horizontalNeck", {
+      /**
+       * @return Horizontal neck position
+       */
+      get: function() {
+        return this.getPropertyValue("horizontalNeck");
+      },
+      /**
+       * A relative vertical position of the "neck". If the top and bottom sides
+       * are of different width, and `horizontalNeck` is set, a choke point
+       * will be created at that position, creating a funnel shape.
+       *
+       * @param value  Horizontal neck position
+       */
+      set: function(value) {
+        this.setPropertyValue("horizontalNeck", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Trapezoid2.prototype, "verticalNeck", {
+      /**
+       * @return Vertical neck position
+       */
+      get: function() {
+        return this.getPropertyValue("verticalNeck");
+      },
+      /**
+       * A relative horizontal position of the "neck". If the left and right sides
+       * are of different height, and `verticalNeck` is set, a choke point
+       * will be created at that position, creating a funnel shape.
+       *
+       * @param value  Vertical neck position
+       */
+      set: function(value) {
+        this.setPropertyValue("verticalNeck", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return Trapezoid2;
   }(Sprite)
 );
-registry.registeredClasses["Line"] = Line;
+registry.registeredClasses["Trapezoid"] = Trapezoid;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/Triangle.js
+var Triangle = (
+  /** @class */
+  function(_super) {
+    __extends(Triangle2, _super);
+    function Triangle2() {
+      var _this = _super.call(this) || this;
+      _this.className = "Triangle";
+      _this.element = _this.paper.add("path");
+      _this.direction = "top";
+      _this.applyTheme();
+      return _this;
+    }
+    Triangle2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      var w = this.pixelWidth;
+      var h = this.pixelHeight;
+      var path;
+      switch (this.direction) {
+        case "right":
+          path = moveTo({
+            x: 0,
+            y: 0
+          }) + lineTo({
+            x: w,
+            y: h / 2
+          }) + lineTo({
+            x: 0,
+            y: h
+          }) + closePath();
+          break;
+        case "left":
+          path = moveTo({
+            x: w,
+            y: 0
+          }) + lineTo({
+            x: 0,
+            y: h / 2
+          }) + lineTo({
+            x: w,
+            y: h
+          }) + closePath();
+          break;
+        case "bottom":
+          path = moveTo({
+            x: 0,
+            y: 0
+          }) + lineTo({
+            x: w,
+            y: 0
+          }) + lineTo({
+            x: w / 2,
+            y: h
+          }) + closePath();
+          break;
+        case "top":
+          path = moveTo({
+            x: w / 2,
+            y: 0
+          }) + lineTo({
+            x: w,
+            y: h
+          }) + lineTo({
+            x: 0,
+            y: h
+          }) + closePath();
+          break;
+      }
+      this.path = path;
+    };
+    Object.defineProperty(Triangle2.prototype, "direction", {
+      /**
+       * Returns direction of a triangle
+       *
+       * @return value
+       */
+      get: function() {
+        return this.getPropertyValue("direction");
+      },
+      /**
+       * Sets direction of a triangle
+       *
+       * @param value
+       */
+      set: function(value) {
+        this.setPropertyValue("direction", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return Triangle2;
+  }(Sprite)
+);
+registry.registeredClasses["Triangle"] = Triangle;
 
 // node_modules/@amcharts/amcharts4/.internal/core/rendering/Smoothing.js
 var Tension = (
@@ -33054,6 +33962,157 @@ var Basis = (
   }()
 );
 
+// node_modules/@amcharts/amcharts4/.internal/core/elements/WavedCircle.js
+var WavedCircle = (
+  /** @class */
+  function(_super) {
+    __extends(WavedCircle2, _super);
+    function WavedCircle2() {
+      var _this = _super.call(this) || this;
+      _this.className = "WavedCircle";
+      _this.element = _this.paper.add("path");
+      _this.waveLength = 16;
+      _this.waveHeight = 4;
+      _this.fill = void 0;
+      _this.fillOpacity = 0;
+      _this.tension = 0.8;
+      _this.applyTheme();
+      return _this;
+    }
+    WavedCircle2.prototype.draw = function() {
+      var path = "";
+      var radius = this.pixelRadius;
+      if (radius > 0) {
+        var points = this.getPoints(radius);
+        path = moveTo(points[0]) + new Tension(this.tension, this.tension).smooth(points);
+      }
+      var innerRadius = this.pixelInnerRadius;
+      if (innerRadius > 0) {
+        var points = this.getPoints(innerRadius);
+        points.reverse();
+        path += moveTo(points[0]) + new Tension(this.tension, this.tension).smooth(points);
+      }
+      this.path = path;
+    };
+    WavedCircle2.prototype.getPoints = function(radius) {
+      var circleLength = radius * Math.PI * 2;
+      var halfWaveHeight = this.waveHeight / 2;
+      var waveLength = circleLength / Math.round(circleLength / this.waveLength);
+      var halfWaveLength = waveLength / 2;
+      var points = [];
+      var count = circleLength / waveLength;
+      for (var i = 0; i <= count; i++) {
+        var angle1 = i * waveLength / circleLength * 360;
+        var angle2 = (i * waveLength + halfWaveLength) / circleLength * 360;
+        points.push({
+          x: (radius - halfWaveHeight) * cos(angle1),
+          y: (radius - halfWaveHeight) * sin(angle1)
+        });
+        points.push({
+          x: (radius + halfWaveHeight) * cos(angle2),
+          y: (radius + halfWaveHeight) * sin(angle2)
+        });
+      }
+      points.pop();
+      return points;
+    };
+    Object.defineProperty(WavedCircle2.prototype, "innerRadius", {
+      /**
+       * @return Inner radius
+       */
+      get: function() {
+        return this.getPropertyValue("innerRadius");
+      },
+      /**
+       * Inner radius of the circle in pixels (absolute) or [[Percent]] (relative).
+       *
+       * @param value  Inner radius
+       */
+      set: function(value) {
+        this.setPercentProperty("innerRadius", value, true, false, 10, false);
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(WavedCircle2.prototype, "pixelInnerRadius", {
+      /**
+       * Calculated inner radius of the circle in pixels.
+       *
+       * @readonly
+       * @return Inner radius (px)
+       */
+      get: function() {
+        return relativeToValue(this.innerRadius, min(this.innerWidth / 2, this.innerHeight / 2));
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(WavedCircle2.prototype, "waveLength", {
+      /**
+       * @return Wave length (px)
+       */
+      get: function() {
+        return this.getPropertyValue("waveLength");
+      },
+      /**
+       * Wave length in pixels.
+       *
+       * @default 16
+       * @param value  Wave length (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("waveLength", value);
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(WavedCircle2.prototype, "waveHeight", {
+      /**
+       * @return Wave height (px)
+       */
+      get: function() {
+        return this.getPropertyValue("waveHeight");
+      },
+      /**
+       * Wave height in pixels.
+       *
+       * @default 4
+       * @param value  Wave height (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("waveHeight", value);
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(WavedCircle2.prototype, "tension", {
+      /**
+       * @return Tension
+       */
+      get: function() {
+        return this.getPropertyValue("tension");
+      },
+      /**
+       * Tension of the wave.
+       *
+       * @default 0.8
+       * @param value  Tension
+       */
+      set: function(value) {
+        this.setPropertyValue("tension", value);
+        this.invalidate();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    return WavedCircle2;
+  }(Circle)
+);
+registry.registeredClasses["WavedCircle"] = WavedCircle;
+
 // node_modules/@amcharts/amcharts4/.internal/core/elements/WavedLine.js
 var WavedLine = (
   /** @class */
@@ -33408,608 +34467,300 @@ var ZoomOutButton = (
 );
 registry.registeredClasses["ZoomOutButton"] = ZoomOutButton;
 
-// node_modules/@amcharts/amcharts4/.internal/core/rendering/filters/DesaturateFilter.js
-var DesaturateFilter = (
+// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/ColorModifier.js
+var ColorModifier = (
   /** @class */
   function(_super) {
-    __extends(DesaturateFilter2, _super);
-    function DesaturateFilter2() {
+    __extends(ColorModifier2, _super);
+    function ColorModifier2() {
       var _this = _super.call(this) || this;
-      _this.className = "DesaturateFilter";
-      _this.feColorMatrix = _this.paper.add("feColorMatrix");
-      _this.feColorMatrix.attr({
-        "type": "saturate"
-      });
-      _this.filterPrimitives.push(_this.feColorMatrix);
-      _this.width = 120;
-      _this.height = 120;
-      _this.saturation = 0;
+      _this.className = "ColorModifier";
       _this.applyTheme();
       return _this;
     }
-    Object.defineProperty(DesaturateFilter2.prototype, "saturation", {
+    ColorModifier2.prototype.modify = function(value) {
+      return value;
+    };
+    return ColorModifier2;
+  }(BaseObject)
+);
+registry.registeredClasses["ColorModifier"] = ColorModifier;
+
+// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/GradientModifier.js
+var GradientModifier = (
+  /** @class */
+  function(_super) {
+    __extends(GradientModifier2, _super);
+    function GradientModifier2() {
+      var _this = _super.call(this) || this;
+      _this.lightnesses = [];
+      _this.brightnesses = [];
+      _this.opacities = [];
+      _this.offsets = [];
+      _this.className = "GradientModifier";
+      _this.applyTheme();
+      return _this;
+    }
+    Object.defineProperty(GradientModifier2.prototype, "lightnesses", {
       /**
-       * @return Saturation (0-1)
+       * @return Lightness values
        */
       get: function() {
-        return this.properties["saturation"];
+        return this._lightnesses;
       },
       /**
-       * Saturation.
+       * An array of lightness values for each step.
        *
-       * 0 - completely desaturated.
-       * 1 - fully saturated (gray).
-       *
-       * @param value  Saturation (0-1)
+       * @param value  Lightness values
        */
       set: function(value) {
-        this.properties["saturation"] = value;
-        this.feColorMatrix.attr({
-          "values": value.toString()
-        });
+        this._lightnesses = value;
+        this._brightnesses = [];
       },
       enumerable: true,
       configurable: true
     });
-    return DesaturateFilter2;
-  }(Filter)
+    Object.defineProperty(GradientModifier2.prototype, "brightnesses", {
+      /**
+       * @return Brightness values
+       */
+      get: function() {
+        return this._brightnesses;
+      },
+      /**
+       * An array of brightness values for each step.
+       *
+       * @param value  Brightness values
+       */
+      set: function(value) {
+        this._brightnesses = value;
+        this._lightnesses = [];
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(GradientModifier2.prototype, "opacities", {
+      /**
+       * @return Opacity values
+       */
+      get: function() {
+        return this._opacities;
+      },
+      /**
+       * An array of opacity values for each step.
+       *
+       * @param value  Opacity values
+       */
+      set: function(value) {
+        this._opacities = value;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(GradientModifier2.prototype, "offsets", {
+      /**
+       * @return Offsets
+       */
+      get: function() {
+        return this._offsets;
+      },
+      /**
+       * An array of relative position (0-1) for each step.
+       *
+       * If not set, all steps will be of equal relative length.
+       *
+       * @param value  Offsets
+       */
+      set: function(value) {
+        this._offsets = value;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    GradientModifier2.prototype.modify = function(value) {
+      this.gradient.clear();
+      var count = 0;
+      if (this.opacities) {
+        count = max(count, this.opacities.length);
+      }
+      if (this.lightnesses) {
+        count = max(count, this.lightnesses.length);
+      }
+      if (this.brightnesses) {
+        count = max(count, this.brightnesses.length);
+      }
+      var opacity = 1, lightness, brightness;
+      for (var i = 0; i < count; i++) {
+        var color2 = value;
+        if (this.opacities && isNumber(this.opacities[i])) {
+          opacity = this.opacities[i];
+        }
+        if (this.lightnesses && isNumber(this.lightnesses[i])) {
+          lightness = this.lightnesses[i];
+          brightness = void 0;
+        }
+        if (this.brightnesses && isNumber(this.brightnesses[i])) {
+          brightness = this.brightnesses[i];
+          lightness = void 0;
+        }
+        if (isNumber(brightness)) {
+          color2 = value.brighten(this.brightnesses[i]);
+        } else if (isNumber(lightness)) {
+          color2 = value.lighten(this.lightnesses[i]);
+        }
+        var offset = this.offsets[i];
+        this.gradient.addColor(color2, opacity, offset);
+      }
+      return this.gradient;
+    };
+    GradientModifier2.prototype.copyFrom = function(source) {
+      _super.prototype.copyFrom.call(this, source);
+      this._offsets = source.offsets;
+      this._brightnesses = source.brightnesses;
+      this._lightnesses = source.lightnesses;
+      this._opacities = source.opacities;
+    };
+    return GradientModifier2;
+  }(ColorModifier)
 );
-registry.registeredClasses["DesaturateFilter"] = DesaturateFilter;
+registry.registeredClasses["GradientModifier"] = GradientModifier;
 
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Circle.js
-var Circle = (
+// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/LinearGradientModifier.js
+var LinearGradientModifier = (
   /** @class */
   function(_super) {
-    __extends(Circle2, _super);
-    function Circle2() {
+    __extends(LinearGradientModifier2, _super);
+    function LinearGradientModifier2() {
       var _this = _super.call(this) || this;
-      _this.className = "Circle";
-      _this.element = _this.paper.add("circle");
-      _this.setPercentProperty("radius", percent(100));
-      _this.setPropertyValue("horizontalCenter", "middle");
-      _this.setPropertyValue("verticalCenter", "middle");
+      _this.className = "LinearGradientModifier";
+      _this.gradient = new LinearGradient();
       _this.applyTheme();
       return _this;
     }
-    Circle2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      this.element.attr({
-        "r": this.pixelRadius
-      });
+    LinearGradientModifier2.prototype.copyFrom = function(source) {
+      _super.prototype.copyFrom.call(this, source);
+      this.gradient = source.gradient.clone();
     };
-    Object.defineProperty(Circle2.prototype, "radius", {
+    return LinearGradientModifier2;
+  }(GradientModifier)
+);
+registry.registeredClasses["LinearGradientModifier"] = LinearGradientModifier;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/3d/Cone.js
+var Cone = (
+  /** @class */
+  function(_super) {
+    __extends(Cone2, _super);
+    function Cone2() {
+      var _this = _super.call(this) || this;
+      _this.className = "Cone";
+      _this.angle = 30;
+      _this.radius = percent(100);
+      _this.topRadius = percent(100);
+      _this.top = _this.createChild(Ellipse);
+      _this.top.shouldClone = false;
+      _this.bottom = _this.createChild(Ellipse);
+      _this.bottom.shouldClone = false;
+      _this.body = _this.createChild(Sprite);
+      _this.body.shouldClone = false;
+      _this.body.setElement(_this.paper.add("path"));
+      _this.layout = "none";
+      _this.bodyFillModifier = new LinearGradientModifier();
+      _this.bodyFillModifier.lightnesses = [0, -0.25, 0];
+      _this.body.fillModifier = _this.bodyFillModifier;
+      _this.applyTheme();
+      return _this;
+    }
+    Cone2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      copyProperties(this, this.top, visualProperties);
+      copyProperties(this, this.bottom, visualProperties);
+      copyProperties(this, this.body, visualProperties);
+      var w = this.innerWidth;
+      var h = this.innerHeight;
+      var bottom = this.bottom;
+      var top = this.top;
+      var angle = this.angle;
+      var radiusBase;
+      var dx;
+      var dy;
+      if (this.orientation == "horizontal") {
+        radiusBase = h / 2;
+        bottom.y = h / 2;
+        bottom.x = 0;
+        top.y = h / 2;
+        top.x = w;
+        dx = (90 - angle) / 90;
+        dy = 0;
+        this.bodyFillModifier.gradient.rotation = 90;
+      } else {
+        dx = 0;
+        dy = (90 - angle) / 90;
+        radiusBase = w / 2;
+        bottom.y = h;
+        bottom.x = w / 2;
+        top.x = w / 2;
+        this.bodyFillModifier.gradient.rotation = 0;
+      }
+      var radius = this.radius.value * radiusBase;
+      var topRadius = this.topRadius.value * radiusBase;
+      bottom.radius = radius - radius * dx;
+      bottom.radiusY = radius - radius * dy;
+      top.radius = topRadius - topRadius * dx;
+      top.radiusY = topRadius - topRadius * dy;
+      var path;
+      if (this.orientation == "horizontal") {
+        path = moveTo({
+          x: 0,
+          y: h / 2 - bottom.radiusY
+        }) + arcTo(-90, -180, bottom.radius, bottom.radiusY) + lineTo({
+          x: w,
+          y: h / 2 + top.radiusY
+        }) + arcTo(90, 180, top.radius, top.radiusY) + closePath();
+      } else {
+        path = moveTo({
+          x: w / 2 - top.radius,
+          y: 0
+        }) + arcTo(180, -180, top.radius, top.radiusY) + lineTo({
+          x: w / 2 + bottom.radius,
+          y: h
+        }) + arcTo(0, 180, bottom.radius, bottom.radiusY) + closePath();
+      }
+      this.body.path = path;
+    };
+    Object.defineProperty(Cone2.prototype, "angle", {
       /**
-       * @return Radius
+       * @return Angle
+       */
+      get: function() {
+        return this.getPropertyValue("angle");
+      },
+      /**
+       * Angle of the point of view to the 3D element. (0-360)
+       *
+       * @default 30
+       * @param value  Angle
+       */
+      set: function(value) {
+        this.setPropertyValue("angle", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Cone2.prototype, "radius", {
+      /**
+       * @return Bottom radius
        */
       get: function() {
         return this.getPropertyValue("radius");
       },
       /**
-       * Radius of the circle.
+       * A relative radius of the cone's bottom (base).
        *
-       * Can be either absolute (pixels) or relative ([Percent]).
-       *
-       * @param value  Radius
-       */
-      set: function(value) {
-        this.setPercentProperty("radius", value, true, false, 10, false);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Circle2.prototype, "pixelRadius", {
-      /**
-       * Radius of the circle in pixels.
-       *
-       * This is a read-only property. To set radius in pixels, use `radius`
-       * property.
-       *
-       * @readonly
-       * @return Radius (px)
-       */
-      get: function() {
-        return relativeToValue(this.radius, min(this.innerWidth / 2, this.innerHeight / 2));
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Circle2.prototype.measureElement = function() {
-      var pixelRadius = this.pixelRadius;
-      this._bbox = {
-        x: -pixelRadius,
-        y: -pixelRadius,
-        width: pixelRadius * 2,
-        height: pixelRadius * 2
-      };
-    };
-    return Circle2;
-  }(Sprite)
-);
-registry.registeredClasses["Circle"] = Circle;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/WavedCircle.js
-var WavedCircle = (
-  /** @class */
-  function(_super) {
-    __extends(WavedCircle2, _super);
-    function WavedCircle2() {
-      var _this = _super.call(this) || this;
-      _this.className = "WavedCircle";
-      _this.element = _this.paper.add("path");
-      _this.waveLength = 16;
-      _this.waveHeight = 4;
-      _this.fill = void 0;
-      _this.fillOpacity = 0;
-      _this.tension = 0.8;
-      _this.applyTheme();
-      return _this;
-    }
-    WavedCircle2.prototype.draw = function() {
-      var path = "";
-      var radius = this.pixelRadius;
-      if (radius > 0) {
-        var points = this.getPoints(radius);
-        path = moveTo(points[0]) + new Tension(this.tension, this.tension).smooth(points);
-      }
-      var innerRadius = this.pixelInnerRadius;
-      if (innerRadius > 0) {
-        var points = this.getPoints(innerRadius);
-        points.reverse();
-        path += moveTo(points[0]) + new Tension(this.tension, this.tension).smooth(points);
-      }
-      this.path = path;
-    };
-    WavedCircle2.prototype.getPoints = function(radius) {
-      var circleLength = radius * Math.PI * 2;
-      var halfWaveHeight = this.waveHeight / 2;
-      var waveLength = circleLength / Math.round(circleLength / this.waveLength);
-      var halfWaveLength = waveLength / 2;
-      var points = [];
-      var count = circleLength / waveLength;
-      for (var i = 0; i <= count; i++) {
-        var angle1 = i * waveLength / circleLength * 360;
-        var angle2 = (i * waveLength + halfWaveLength) / circleLength * 360;
-        points.push({
-          x: (radius - halfWaveHeight) * cos(angle1),
-          y: (radius - halfWaveHeight) * sin(angle1)
-        });
-        points.push({
-          x: (radius + halfWaveHeight) * cos(angle2),
-          y: (radius + halfWaveHeight) * sin(angle2)
-        });
-      }
-      points.pop();
-      return points;
-    };
-    Object.defineProperty(WavedCircle2.prototype, "innerRadius", {
-      /**
-       * @return Inner radius
-       */
-      get: function() {
-        return this.getPropertyValue("innerRadius");
-      },
-      /**
-       * Inner radius of the circle in pixels (absolute) or [[Percent]] (relative).
-       *
-       * @param value  Inner radius
-       */
-      set: function(value) {
-        this.setPercentProperty("innerRadius", value, true, false, 10, false);
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(WavedCircle2.prototype, "pixelInnerRadius", {
-      /**
-       * Calculated inner radius of the circle in pixels.
-       *
-       * @readonly
-       * @return Inner radius (px)
-       */
-      get: function() {
-        return relativeToValue(this.innerRadius, min(this.innerWidth / 2, this.innerHeight / 2));
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(WavedCircle2.prototype, "waveLength", {
-      /**
-       * @return Wave length (px)
-       */
-      get: function() {
-        return this.getPropertyValue("waveLength");
-      },
-      /**
-       * Wave length in pixels.
-       *
-       * @default 16
-       * @param value  Wave length (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("waveLength", value);
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(WavedCircle2.prototype, "waveHeight", {
-      /**
-       * @return Wave height (px)
-       */
-      get: function() {
-        return this.getPropertyValue("waveHeight");
-      },
-      /**
-       * Wave height in pixels.
-       *
-       * @default 4
-       * @param value  Wave height (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("waveHeight", value);
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(WavedCircle2.prototype, "tension", {
-      /**
-       * @return Tension
-       */
-      get: function() {
-        return this.getPropertyValue("tension");
-      },
-      /**
-       * Tension of the wave.
-       *
-       * @default 0.8
-       * @param value  Tension
-       */
-      set: function(value) {
-        this.setPropertyValue("tension", value);
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return WavedCircle2;
-  }(Circle)
-);
-registry.registeredClasses["WavedCircle"] = WavedCircle;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Trapezoid.js
-var Trapezoid = (
-  /** @class */
-  function(_super) {
-    __extends(Trapezoid2, _super);
-    function Trapezoid2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Trapezoid";
-      _this.element = _this.paper.add("path");
-      _this.topSide = percent(100);
-      _this.bottomSide = percent(100);
-      _this.leftSide = percent(100);
-      _this.rightSide = percent(100);
-      _this.isMeasured = false;
-      _this.applyTheme();
-      return _this;
-    }
-    Trapezoid2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      var w = this.pixelWidth;
-      var h = this.pixelHeight;
-      var ts = relativeToValue(this.topSide, w);
-      var bs = relativeToValue(this.bottomSide, w);
-      var ls = relativeToValue(this.leftSide, h);
-      var rs = relativeToValue(this.rightSide, h);
-      var x0 = (w - ts) / 2;
-      var y0 = (h - ls) / 2;
-      var x1 = w - (w - ts) / 2;
-      var y1 = (h - rs) / 2;
-      var x2 = w - (w - bs) / 2;
-      var y2 = h - (h - rs) / 2;
-      var x3 = (w - bs) / 2;
-      var y3 = h - (h - ls) / 2;
-      var mt = "";
-      var mr = "";
-      var mb = "";
-      var ml = "";
-      if (hasValue(this.horizontalNeck)) {
-        var hn = this.horizontalNeck.value;
-        mt = lineTo({
-          x: w * hn,
-          y: Math.max(y0, y1)
-        });
-        mb = lineTo({
-          x: w * hn,
-          y: Math.min(y2, y3)
-        });
-      }
-      if (hasValue(this.verticalNeck)) {
-        var vn = this.verticalNeck.value;
-        mr = lineTo({
-          x: Math.min(x1, x2),
-          y: h * vn
-        });
-        ml = lineTo({
-          x: Math.max(x0, x3),
-          y: h * vn
-        });
-      }
-      var path = moveTo({
-        x: x0,
-        y: y0
-      }) + mt + lineTo({
-        x: x1,
-        y: y1
-      }) + mr + lineTo({
-        x: x2,
-        y: y2
-      }) + mb + lineTo({
-        x: x3,
-        y: y3
-      }) + ml;
-      this.path = path;
-    };
-    Object.defineProperty(Trapezoid2.prototype, "topSide", {
-      /**
-       * @return Width
-       */
-      get: function() {
-        return this.getPropertyValue("topSide");
-      },
-      /**
-       * Wdith of the top side. Absolute (px) or relative ([[Percent]]).
+       * It is relevant to the inner width or height of the element.
        *
        * @default Percent(100)
-       * @param value  Width
-       */
-      set: function(value) {
-        this.setPercentProperty("topSide", value, true, false, 10, false);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Trapezoid2.prototype, "bottomSide", {
-      /**
-       * @return Width
-       */
-      get: function() {
-        return this.getPropertyValue("bottomSide");
-      },
-      /**
-       * Wdith of the bottom side. Absolute (px) or relative ([[Percent]]).
-       *
-       * @default Percent(100)
-       * @param value  Width
-       */
-      set: function(value) {
-        this.setPercentProperty("bottomSide", value, true, false, 10, false);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Trapezoid2.prototype, "leftSide", {
-      /**
-       * @return Height
-       */
-      get: function() {
-        return this.getPropertyValue("leftSide");
-      },
-      /**
-       * Height of the left side. Absolute (px) or relative ([[Percent]]).
-       *
-       * @default Percent(100)
-       * @param value  Height
-       */
-      set: function(value) {
-        this.setPercentProperty("leftSide", value, true, false, 10, false);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Trapezoid2.prototype, "rightSide", {
-      /**
-       * @return Height
-       */
-      get: function() {
-        return this.getPropertyValue("rightSide");
-      },
-      /**
-       * Height of the right side. Absolute (px) or relative ([[Percent]]).
-       *
-       * @default Percent(100)
-       * @param value  Height
-       */
-      set: function(value) {
-        this.setPercentProperty("rightSide", value, true, false, 10, false);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Trapezoid2.prototype, "horizontalNeck", {
-      /**
-       * @return Horizontal neck position
-       */
-      get: function() {
-        return this.getPropertyValue("horizontalNeck");
-      },
-      /**
-       * A relative vertical position of the "neck". If the top and bottom sides
-       * are of different width, and `horizontalNeck` is set, a choke point
-       * will be created at that position, creating a funnel shape.
-       *
-       * @param value  Horizontal neck position
-       */
-      set: function(value) {
-        this.setPropertyValue("horizontalNeck", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Trapezoid2.prototype, "verticalNeck", {
-      /**
-       * @return Vertical neck position
-       */
-      get: function() {
-        return this.getPropertyValue("verticalNeck");
-      },
-      /**
-       * A relative horizontal position of the "neck". If the left and right sides
-       * are of different height, and `verticalNeck` is set, a choke point
-       * will be created at that position, creating a funnel shape.
-       *
-       * @param value  Vertical neck position
-       */
-      set: function(value) {
-        this.setPropertyValue("verticalNeck", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return Trapezoid2;
-  }(Sprite)
-);
-registry.registeredClasses["Trapezoid"] = Trapezoid;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Slice.js
-var Slice = (
-  /** @class */
-  function(_super) {
-    __extends(Slice2, _super);
-    function Slice2() {
-      var _this = (
-        // Init
-        _super.call(this) || this
-      );
-      _this.className = "Slice";
-      _this.setPropertyValue("cornerRadius", 0);
-      _this.setPropertyValue("startAngle", 0);
-      _this.setPercentProperty("innerRadius", 0);
-      _this.setPercentProperty("radius", 0);
-      _this.setPropertyValue("arc", 0);
-      _this.setPropertyValue("shiftRadius", 0);
-      _this.strokeOpacity = 1;
-      _this.setPropertyValue("layout", "none");
-      _this.slice = _this.createChild(Sprite);
-      _this.slice.isMeasured = false;
-      _this._disposers.push(_this.slice);
-      _this.applyTheme();
-      return _this;
-    }
-    Slice2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      var radiusY = this.radiusY;
-      if (this.radius > 0 && radiusY == 0) {
-        radiusY = 0.01;
-      }
-      this.slice.path = arc(this.startAngle, this.arc, this.radius, this.pixelInnerRadius, radiusY, this.cornerRadius, this.innerCornerRadius);
-      this.slice.invalidate();
-      this.shiftRadius = this.shiftRadius;
-      if (this.realFill instanceof RadialGradient) {
-        this.updateGradient(this.realFill);
-      }
-      if (this.realStroke instanceof RadialGradient) {
-        this.updateGradient(this.realStroke);
-      }
-    };
-    Slice2.prototype.updateGradient = function(gradient) {
-      gradient.element.attr({
-        "gradientUnits": "userSpaceOnUse"
-      });
-      gradient.element.attr({
-        "r": this.radius
-      });
-      gradient.cx = 0;
-      gradient.cy = 0;
-      gradient.element.attr({
-        radius: this.radius
-      });
-    };
-    Object.defineProperty(Slice2.prototype, "bbox", {
-      /**
-       * Returns bounding box (square) for this element.
-       *
-       * @ignore Exclude from docs
-       */
-      get: function() {
-        if (this.definedBBox) {
-          return this.definedBBox;
-        }
-        if (this.isMeasured) {
-          var innerRect = getArcRect(this.startAngle, this.startAngle + this.arc, this.pixelInnerRadius);
-          var outerRect = getArcRect(this.startAngle, this.startAngle + this.arc, this.radius);
-          return getCommonRectangle([innerRect, outerRect]);
-        } else {
-          return {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0
-          };
-        }
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "startAngle", {
-      /**
-       * @return Angle (0-360)
-       */
-      get: function() {
-        return this.getPropertyValue("startAngle");
-      },
-      /**
-       * The angle at which left edge of the slice is drawn. (0-360)
-       *
-       * 0 is to the right of the center.
-       *
-       * @param value  Angle (0-360)
-       */
-      set: function(value) {
-        this.setPropertyValue("startAngle", normalizeAngle(value), true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "arc", {
-      /**
-       * @return [description]
-       */
-      get: function() {
-        return this.getPropertyValue("arc");
-      },
-      /**
-       * [arc description]
-       *
-       * @todo Description
-       * @param value [description]
-       */
-      set: function(value) {
-        if (!isNumber(value)) {
-          value = 0;
-        }
-        this.setPropertyValue("arc", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "radius", {
-      /**
-       * @return Radius (px)
-       */
-      get: function() {
-        var radius = this.getPropertyValue("radius");
-        if (!isNumber(radius)) {
-          radius = 0;
-        }
-        return radius;
-      },
-      /**
-       * Radius of the slice in pixels.
-       *
-       * @param value  Radius (px)
+       * @param value  Bottom radius
        */
       set: function(value) {
         this.setPropertyValue("radius", value, true);
@@ -34017,191 +34768,49 @@ var Slice = (
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Slice2.prototype, "radiusY", {
+    Object.defineProperty(Cone2.prototype, "topRadius", {
       /**
-       * @return Vertical radius (0-1)
+       * @return Top radius
        */
       get: function() {
-        var value = this.getPropertyValue("radiusY");
-        if (!isNumber(value)) {
-          value = this.radius;
-        }
-        return value;
+        return this.getPropertyValue("topRadius");
       },
       /**
-       * Vertical radius for creating skewed slices.
+       * A relative radius of the cone's top (tip).
        *
-       * This is relevant to `radius`, e.g. 0.5 will set vertical radius to half
-       * the `radius`.
+       * It is relevant to the inner width or height of the element.
        *
-       * @param value Vertical radius (0-1)
+       * @default Percent(0)
+       * @param value  Top radius
        */
       set: function(value) {
-        this.setPropertyValue("radiusY", value, true);
+        this.setPropertyValue("topRadius", value, true);
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Slice2.prototype, "innerRadius", {
+    Object.defineProperty(Cone2.prototype, "orientation", {
       /**
-       * @return Radius (px or %)
+       * Orientation
        */
       get: function() {
-        return this.getPropertyValue("innerRadius");
+        return this.getPropertyValue("orientation");
       },
       /**
-       * Inner radius of the slice for creating cut out (donut) slices.
+       * Orientation of the cone
        *
-       * @default 0
-       * @param value  Radius (px or %)
+       * @default "vertical"
+       * @param value  Orientation
        */
       set: function(value) {
-        this.setPercentProperty("innerRadius", value, true, false, 10, false);
+        this.setPropertyValue("orientation", value, true);
       },
       enumerable: true,
       configurable: true
     });
-    Object.defineProperty(Slice2.prototype, "pixelInnerRadius", {
-      /**
-       * @return Radius px
-       */
-      get: function() {
-        return relativeToValue(this.innerRadius, this.radius);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "cornerRadius", {
-      /**
-       * @return Radius (px)
-       */
-      get: function() {
-        return this.getPropertyValue("cornerRadius");
-      },
-      /**
-       * Radius of slice's outer corners in pixels.
-       *
-       * @default 0
-       * @param value  Radius (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("cornerRadius", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "innerCornerRadius", {
-      /**
-       * @return Radius (px)
-       */
-      get: function() {
-        return this.getPropertyValue("innerCornerRadius");
-      },
-      /**
-       * Radius of slice's inner corners in pixels.
-       *
-       * @default 0
-       * @param value  Radius (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("innerCornerRadius", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "shiftRadius", {
-      /**
-       * @return Radius shift
-       */
-      get: function() {
-        return this.getPropertyValue("shiftRadius");
-      },
-      /**
-       * Indicates how far (relatively to center) a slice should be moved.
-       *
-       * The value is relative to the radius of the slice. Meaning 0 no shift,
-       * 1 - slice shifted outside by whole of its radius.
-       *
-       * @param  value  Radius shift
-       */
-      set: function(value) {
-        this.setPropertyValue("shiftRadius", value);
-        value = this.getPropertyValue("shiftRadius");
-        this.dx = value * this.radius * this.ix;
-        this.dy = value * this.radiusY * this.iy;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "ix", {
-      /**
-       * [ix description]
-       *
-       * @ignore Exclude from docs
-       * @todo Description
-       * @return [description]
-       */
-      get: function() {
-        return cos(this.middleAngle);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "iy", {
-      /**
-       * [iy description]
-       *
-       * @ignore Exclude from docs
-       * @todo Description
-       * @return [description]
-       */
-      get: function() {
-        return sin(this.middleAngle);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Slice2.prototype, "middleAngle", {
-      /**
-       * An angle of the slice's middle.
-       *
-       * @ignore Exclude from docs
-       * @return Angle
-       */
-      get: function() {
-        return this.startAngle + this.arc / 2;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Slice2.prototype.getTooltipX = function() {
-      var value = this.getPropertyValue("tooltipX");
-      if (isNumber(value)) {
-        return value;
-      }
-      var p = 0.5;
-      if (value instanceof Percent) {
-        p = value.value;
-      }
-      var innerRadius = relativeToValue(this.innerRadius, this.radius);
-      return this.ix * (innerRadius + (this.radius - innerRadius) * p);
-    };
-    Slice2.prototype.getTooltipY = function() {
-      var value = this.getPropertyValue("tooltipY");
-      if (isNumber(value)) {
-        return value;
-      }
-      var p = 0.5;
-      if (value instanceof Percent) {
-        p = value.value;
-      }
-      var innerRadius = relativeToValue(this.innerRadius, this.radius);
-      return this.iy * (innerRadius + (this.radius - innerRadius) * p) + this.slice.dy;
-    };
-    return Slice2;
+    return Cone2;
   }(Container)
 );
-registry.registeredClasses["Slice"] = Slice;
 
 // node_modules/@amcharts/amcharts4/.internal/core/rendering/filters/LightenFilter.js
 var LightenFilter = (
@@ -34251,6 +34860,188 @@ var LightenFilter = (
   }(Filter)
 );
 registry.registeredClasses["LightenFilter"] = LightenFilter;
+
+// node_modules/@amcharts/amcharts4/.internal/core/elements/3d/Rectangle3D.js
+var Rectangle3D = (
+  /** @class */
+  function(_super) {
+    __extends(Rectangle3D2, _super);
+    function Rectangle3D2() {
+      var _this = _super.call(this) || this;
+      _this.angle = 30;
+      _this.depth = 30;
+      _this.className = "Rectangle3D";
+      _this.layout = "none";
+      var sideBack = _this.createChild(Sprite);
+      sideBack.shouldClone = false;
+      sideBack.setElement(_this.paper.add("path"));
+      sideBack.isMeasured = false;
+      _this.sideBack = sideBack;
+      _this._disposers.push(_this.sideBack);
+      var sideBottom = _this.createChild(Sprite);
+      sideBottom.shouldClone = false;
+      sideBottom.setElement(_this.paper.add("path"));
+      sideBottom.isMeasured = false;
+      _this.sideBottom = sideBottom;
+      _this._disposers.push(_this.sideBottom);
+      var sideLeft = _this.createChild(Sprite);
+      sideLeft.shouldClone = false;
+      sideLeft.setElement(_this.paper.add("path"));
+      sideLeft.isMeasured = false;
+      _this.sideLeft = sideLeft;
+      _this._disposers.push(_this.sideLeft);
+      var sideRight = _this.createChild(Sprite);
+      sideRight.shouldClone = false;
+      sideRight.setElement(_this.paper.add("path"));
+      sideRight.isMeasured = false;
+      _this.sideRight = sideRight;
+      _this._disposers.push(_this.sideRight);
+      var sideTop = _this.createChild(Sprite);
+      sideTop.shouldClone = false;
+      sideTop.setElement(_this.paper.add("path"));
+      sideTop.isMeasured = false;
+      _this.sideTop = sideTop;
+      _this._disposers.push(_this.sideTop);
+      var sideFront = _this.createChild(Sprite);
+      sideFront.shouldClone = false;
+      sideFront.setElement(_this.paper.add("path"));
+      sideFront.isMeasured = false;
+      _this.sideFront = sideFront;
+      _this._disposers.push(_this.sideFront);
+      _this.applyTheme();
+      return _this;
+    }
+    Rectangle3D2.prototype.draw = function() {
+      _super.prototype.draw.call(this);
+      var w = this.innerWidth;
+      var h = this.innerHeight;
+      var depth = this.depth;
+      var angle = this.angle;
+      var sin2 = sin(angle);
+      var cos2 = cos(angle);
+      var a = {
+        x: 0,
+        y: 0
+      };
+      var b = {
+        x: w,
+        y: 0
+      };
+      var c = {
+        x: w,
+        y: h
+      };
+      var d = {
+        x: 0,
+        y: h
+      };
+      var ah = {
+        x: depth * cos2,
+        y: -depth * sin2
+      };
+      var bh = {
+        x: depth * cos2 + w,
+        y: -depth * sin2
+      };
+      var ch = {
+        x: depth * cos2 + w,
+        y: -depth * sin2 + h
+      };
+      var dh = {
+        x: depth * cos2,
+        y: -depth * sin2 + h
+      };
+      this.sideFront.path = moveTo(a) + lineTo(b) + lineTo(c) + lineTo(d) + closePath();
+      this.sideBack.path = moveTo(ah) + lineTo(bh) + lineTo(ch) + lineTo(dh) + closePath();
+      this.sideLeft.path = moveTo(a) + lineTo(ah) + lineTo(dh) + lineTo(d) + closePath();
+      this.sideRight.path = moveTo(b) + lineTo(bh) + lineTo(ch) + lineTo(c) + closePath();
+      this.sideBottom.path = moveTo(d) + lineTo(dh) + lineTo(ch) + lineTo(c) + closePath();
+      this.sideTop.path = moveTo(a) + lineTo(ah) + lineTo(bh) + lineTo(b) + closePath();
+    };
+    Object.defineProperty(Rectangle3D2.prototype, "depth", {
+      /**
+       * @return Depth (px)
+       */
+      get: function() {
+        return this.getPropertyValue("depth");
+      },
+      /**
+       * Depth (Z dimension) of the 3D rectangle in pixels.
+       *
+       * @default 30
+       * @param value  Depth (px)
+       */
+      set: function(value) {
+        this.setPropertyValue("depth", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(Rectangle3D2.prototype, "angle", {
+      /**
+       * @return Angle
+       */
+      get: function() {
+        return this.getPropertyValue("angle");
+      },
+      /**
+       * Angle of the point of view to the 3D element. (0-360)
+       *
+       * @default 30
+       * @param value  Angle
+       */
+      set: function(value) {
+        this.setPropertyValue("angle", value, true);
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Rectangle3D2.prototype.setFill = function(value) {
+      _super.prototype.setFill.call(this, value);
+      if (!isObject(value) || "r" in value) {
+        value = toColor(value);
+      }
+      var colorStr;
+      if (value instanceof Color) {
+        colorStr = value.hex;
+      } else if (value instanceof LinearGradient || value instanceof RadialGradient) {
+        colorStr = value.stops.getIndex(0).color.hex;
+      } else {
+        var filter = new LightenFilter();
+        filter.lightness = -0.2;
+        this.sideBack.filters.push(filter);
+        var filter2 = filter.clone();
+        filter2.lightness = -0.4;
+        this.sideLeft.filters.push(filter2);
+        var filter3 = filter.clone();
+        filter3.lightness = -0.2;
+        this.sideRight.filters.push(filter3);
+        var filter4 = filter.clone();
+        filter4.lightness = -0.1;
+        this.sideTop.filters.push(filter4);
+        var filter5 = filter.clone();
+        filter5.lightness = -0.5;
+        this.sideBottom.filters.push(filter5);
+      }
+      if (colorStr) {
+        this.sideBack.fill = color(colorStr).lighten(-0.2);
+        this.sideLeft.fill = color(colorStr).lighten(-0.4);
+        this.sideRight.fill = color(colorStr).lighten(-0.2);
+        this.sideTop.fill = color(colorStr).lighten(-0.1);
+        this.sideBottom.fill = color(colorStr).lighten(-0.5);
+      }
+    };
+    Rectangle3D2.prototype.copyFrom = function(source) {
+      _super.prototype.copyFrom.call(this, source);
+      this.sideBack.copyFrom(source.sideBack);
+      this.sideLeft.copyFrom(source.sideLeft);
+      this.sideRight.copyFrom(source.sideRight);
+      this.sideTop.copyFrom(source.sideTop);
+      this.sideBottom.copyFrom(source.sideBottom);
+    };
+    return Rectangle3D2;
+  }(Container)
+);
 
 // node_modules/@amcharts/amcharts4/.internal/core/elements/3d/Slice3D.js
 var Slice3D = (
@@ -34538,1104 +35329,313 @@ var Slice3D = (
   }(Slice)
 );
 
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Polyline.js
-var Polyline = (
+// node_modules/@amcharts/amcharts4/.internal/core/rendering/filters/DesaturateFilter.js
+var DesaturateFilter = (
   /** @class */
   function(_super) {
-    __extends(Polyline2, _super);
-    function Polyline2() {
+    __extends(DesaturateFilter2, _super);
+    function DesaturateFilter2() {
       var _this = _super.call(this) || this;
-      _this._distance = 0;
-      _this.className = "Polyline";
-      _this.element = _this.paper.add("path");
-      _this.shapeRendering = "auto";
-      _this.fill = color();
-      _this.strokeOpacity = 1;
+      _this.className = "DesaturateFilter";
+      _this.feColorMatrix = _this.paper.add("feColorMatrix");
+      _this.feColorMatrix.attr({
+        "type": "saturate"
+      });
+      _this.filterPrimitives.push(_this.feColorMatrix);
+      _this.width = 120;
+      _this.height = 120;
+      _this.saturation = 0;
       _this.applyTheme();
       return _this;
     }
-    Polyline2.prototype.makePath = function() {
-      this._distance = 0;
-      var segments = this.segments;
-      if (segments && segments.length > 0) {
-        var path = "";
-        for (var i = 0, len = segments.length; i < len; i++) {
-          var points = segments[i];
-          if (points.length > 0) {
-            path += moveTo(points[0]);
-            for (var p = 1; p < points.length; p++) {
-              var point = points[p];
-              path += lineTo(point);
-              this._distance += getDistance(points[p - 1], point);
-            }
-          }
-        }
-        this.path = path;
-      }
-      this._realSegments = segments;
-    };
-    Object.defineProperty(Polyline2.prototype, "segments", {
+    Object.defineProperty(DesaturateFilter2.prototype, "saturation", {
       /**
-       * @return Segments
+       * @return Saturation (0-1)
        */
       get: function() {
-        return this.getPropertyValue("segments");
+        return this.properties["saturation"];
       },
       /**
-       * A list of segment coordinates for the multi-part line.
+       * Saturation.
        *
-       * @todo Example
-       * @param segments  Segments
-       */
-      set: function(segments) {
-        this.setPropertyValue("segments", segments);
-        this.makePath();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Polyline2.prototype, "distance", {
-      /**
-       * [distance description]
+       * 0 - completely desaturated.
+       * 1 - fully saturated (gray).
        *
-       * @todo Description
-       * @return [description]
+       * @param value  Saturation (0-1)
        */
-      get: function() {
-        return this._distance;
+      set: function(value) {
+        this.properties["saturation"] = value;
+        this.feColorMatrix.attr({
+          "values": value.toString()
+        });
       },
       enumerable: true,
       configurable: true
     });
-    Polyline2.prototype.positionToPoint = function(position) {
-      var deltaAngle = 0;
-      if (position < 0) {
-        position = Math.abs(position);
-        deltaAngle = 180;
-      }
-      var segments = this._realSegments;
-      if (segments) {
-        var totalDistance = this.distance;
-        var currentDistance = 0;
-        var distanceAB = void 0;
-        var positionA = 0;
-        var positionB = 0;
-        var pointA = void 0;
-        var pointB = void 0;
-        for (var s2 = 0; s2 < segments.length; s2++) {
-          var points = segments[s2];
-          if (points.length > 1) {
-            for (var p = 1; p < points.length; p++) {
-              pointA = points[p - 1];
-              pointB = points[p];
-              positionA = currentDistance / totalDistance;
-              distanceAB = getDistance(pointA, pointB);
-              currentDistance += distanceAB;
-              positionB = currentDistance / totalDistance;
-              if (positionA <= position && positionB > position) {
-                s2 = segments.length;
-                break;
-              }
-            }
-          } else if (points.length == 1) {
-            pointA = points[0];
-            pointB = points[0];
-            positionA = 0;
-            positionB = 1;
-          }
-        }
-        if (pointA && pointB) {
-          var positionAB = (position - positionA) / (positionB - positionA);
-          var midPoint = getMidPoint(pointA, pointB, positionAB);
-          return {
-            x: midPoint.x,
-            y: midPoint.y,
-            angle: deltaAngle + getAngle(pointA, pointB)
-          };
-        }
-      }
-      return {
-        x: 0,
-        y: 0,
-        angle: 0
-      };
-    };
-    Object.defineProperty(Polyline2.prototype, "realSegments", {
-      /**
-       * @ignore
-       */
-      get: function() {
-        return this._realSegments;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return Polyline2;
-  }(Sprite)
+    return DesaturateFilter2;
+  }(Filter)
 );
-registry.registeredClasses["Polyline"] = Polyline;
+registry.registeredClasses["DesaturateFilter"] = DesaturateFilter;
 
-// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/ColorModifier.js
-var ColorModifier = (
+// node_modules/@amcharts/amcharts4/.internal/core/utils/ColorSet.js
+var ColorSet = (
   /** @class */
   function(_super) {
-    __extends(ColorModifier2, _super);
-    function ColorModifier2() {
+    __extends(ColorSet2, _super);
+    function ColorSet2() {
       var _this = _super.call(this) || this;
-      _this.className = "ColorModifier";
+      _this._list = [];
+      _this._currentStep = 0;
+      _this._startIndex = 0;
+      _this._currentPass = 0;
+      _this.baseColor = new Color({
+        r: 103,
+        g: 183,
+        b: 220
+      });
+      _this.stepOptions = {};
+      _this.passOptions = {
+        brighten: -0.2
+      };
+      _this.step = 1;
+      _this.minColors = 20;
+      _this.minLightness = 0.2;
+      _this.maxLightness = 0.9;
+      _this.shuffle = false;
+      _this.wrap = true;
+      _this.reuse = false;
+      _this.saturation = 1;
+      _this.className = "ColorSet";
       _this.applyTheme();
       return _this;
     }
-    ColorModifier2.prototype.modify = function(value) {
-      return value;
+    Object.defineProperty(ColorSet2.prototype, "list", {
+      /**
+       * Returns current list of colors.
+       *
+       * If there are none, a new list of colors is generated, based on various
+       * ColorSet settings.
+       *
+       * @return Color list
+       */
+      get: function() {
+        if (!this._list) {
+          this.generate(this.minColors);
+        }
+        return this._list;
+      },
+      /**
+       * Sets a list of pre-defined colors to use for the iterator.
+       *
+       * @param value Color list
+       */
+      set: function(value) {
+        this._list = value;
+        this.reset();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    ColorSet2.prototype.getReusableColor = function(index) {
+      if (this._list.length == 0) {
+        this.generate(1);
+        return this.list[0];
+      } else {
+        var tmpstep = index - Math.floor(index / this._list.length) * this.list.length;
+        return this.list[tmpstep];
+      }
     };
-    return ColorModifier2;
+    ColorSet2.prototype.next = function() {
+      var color2;
+      if (this.list.length <= this._currentStep) {
+        if (this.reuse) {
+          color2 = this.getReusableColor(this._currentStep);
+        } else {
+          this.generate(max(this.minColors, this._currentStep + 1));
+          color2 = this.list[this._currentStep];
+        }
+      } else {
+        color2 = this.list[this._currentStep];
+      }
+      this._currentStep += this.step;
+      return color2.saturate(this.saturation);
+    };
+    ColorSet2.prototype.getIndex = function(i) {
+      var color2;
+      if (this.list.length <= i) {
+        if (this.reuse) {
+          color2 = this.getReusableColor(i);
+        } else {
+          this.generate(this.minColors);
+          color2 = this.getIndex(i);
+        }
+      } else {
+        color2 = this.list[i];
+      }
+      return color2.saturate(this.saturation);
+    };
+    ColorSet2.prototype.reset = function() {
+      this._currentStep = this._startIndex;
+    };
+    Object.defineProperty(ColorSet2.prototype, "currentStep", {
+      /**
+       * @return Step
+       */
+      get: function() {
+        return this._currentStep;
+      },
+      /**
+       * Sets current color iteration. You can use this property to skip some
+       * colors from iteration. E.g. setting it to `10` will skip first ten
+       * colors.
+       *
+       * Please note that the number is zero-based.
+       *
+       * @param value  Step
+       */
+      set: function(value) {
+        this._currentStep = value;
+      },
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(ColorSet2.prototype, "startIndex", {
+      /**
+       * @return Index
+       */
+      get: function() {
+        return this._startIndex;
+      },
+      /**
+       * If set to non-zero value, the ColorSet will start iterating colors from
+       * that particular index, not the first color in the list.
+       *
+       * @default 0
+       * @since 4.4.9
+       * @param  value  Index
+       */
+      set: function(value) {
+        this._startIndex = value;
+        this.reset();
+      },
+      enumerable: true,
+      configurable: true
+    });
+    ColorSet2.prototype.generate = function(count) {
+      var curColor = this.currentColor;
+      var hsl = rgbToHsl(getValue(curColor.rgb));
+      var hueStep = hasValue(this.stepOptions.hue) ? this.stepOptions.hue : 1 / count;
+      var mods = {
+        brighten: 0,
+        lighten: 0,
+        hue: hsl.h,
+        lightness: hsl.l,
+        saturation: hsl.s
+      };
+      var hues = [];
+      var startIndex = this.list.length == 0 ? 0 : 1;
+      if (this.reuse) {
+        for (var i = startIndex; i <= count; i++) {
+          hues.push(rgbToHsl(getValue(this._list[i].rgb)).h);
+        }
+      } else {
+        for (var i = startIndex; i <= count; i++) {
+          var h = hsl.h + hueStep * i;
+          if (this.wrap && h > 1) {
+            h -= 1;
+          }
+          hues.push(h);
+        }
+      }
+      if (this.shuffle) {
+        hues.sort(function(a, b) {
+          return Math.random() - 0.5;
+        });
+      }
+      for (var i = 0; i < count; i++) {
+        if (this.reuse) {
+          hsl = rgbToHsl(getValue(this._list[i].rgb));
+        } else {
+          hsl.h = hues.shift();
+        }
+        this.applyStepOptions(hsl, mods, i, this._currentPass);
+        var c = color(hslToRgb(hsl));
+        var brighten = (this.stepOptions.brighten || 0) * i + (this.passOptions.brighten || 0) * this._currentPass;
+        if (brighten != 0) {
+          if (this.wrap) {
+            brighten = fitNumberRelative(brighten, this.minLightness, this.maxLightness);
+          } else {
+            brighten = fitNumber(brighten, this.minLightness, this.maxLightness);
+          }
+          c = c.brighten(brighten);
+        }
+        var lighten = (this.stepOptions.lighten || 0) * i + (this.passOptions.lighten || 0) * this._currentPass;
+        if (lighten != 0) {
+          if (this.wrap) {
+            lighten = fitNumberRelative(lighten, this.minLightness, this.maxLightness);
+          } else {
+            lighten = fitNumber(lighten, this.minLightness, this.maxLightness);
+          }
+          c = c.lighten(lighten);
+        }
+        this._list.push(c);
+      }
+      this._currentPass++;
+    };
+    Object.defineProperty(ColorSet2.prototype, "currentColor", {
+      /**
+       * Returns current last color. It's either the last color in the list of
+       * colors, or `baseColor` if list is empty.
+       *
+       * @return Color
+       */
+      get: function() {
+        if (this._list.length == 0) {
+          return this.baseColor.saturate(this.saturation);
+        } else {
+          return this._list[this._list.length - 1].saturate(this.saturation);
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+    ColorSet2.prototype.applyStepOptions = function(hsl, base, step, pass) {
+      hsl.l = base.lightness + (this.stepOptions.lightness || 0) * step + (this.passOptions.lightness || 0) * pass;
+      if (this.wrap) {
+        if (hsl.l > 1) {
+          hsl.l = hsl.l - Math.floor(hsl.l);
+        } else if (hsl.l < 0) {
+          hsl.l = -(hsl.l - Math.floor(hsl.l));
+        }
+        hsl.l = fitNumberRelative(hsl.l, this.minLightness, this.maxLightness);
+      } else {
+        if (hsl.l > 1) {
+          hsl.l = 1;
+        } else if (hsl.l < 0) {
+          hsl.l = 0;
+        }
+        hsl.l = fitNumber(hsl.l, this.minLightness, this.maxLightness);
+      }
+    };
+    ColorSet2.prototype.processConfig = function(config) {
+      if (config) {
+        if (hasValue(config.list) && isArray(config.list)) {
+          for (var i = 0, len = config.list.length; i < len; i++) {
+            if (!(config.list[i] instanceof Color)) {
+              config.list[i] = color(config.list[i]);
+            }
+          }
+        }
+        if (hasValue(config.baseColor) && !(config.baseColor instanceof Color)) {
+          config.baseColor = color(config.baseColor);
+        }
+      }
+      _super.prototype.processConfig.call(this, config);
+    };
+    return ColorSet2;
   }(BaseObject)
 );
-registry.registeredClasses["ColorModifier"] = ColorModifier;
-
-// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/GradientModifier.js
-var GradientModifier = (
-  /** @class */
-  function(_super) {
-    __extends(GradientModifier2, _super);
-    function GradientModifier2() {
-      var _this = _super.call(this) || this;
-      _this.lightnesses = [];
-      _this.brightnesses = [];
-      _this.opacities = [];
-      _this.offsets = [];
-      _this.className = "GradientModifier";
-      _this.applyTheme();
-      return _this;
-    }
-    Object.defineProperty(GradientModifier2.prototype, "lightnesses", {
-      /**
-       * @return Lightness values
-       */
-      get: function() {
-        return this._lightnesses;
-      },
-      /**
-       * An array of lightness values for each step.
-       *
-       * @param value  Lightness values
-       */
-      set: function(value) {
-        this._lightnesses = value;
-        this._brightnesses = [];
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(GradientModifier2.prototype, "brightnesses", {
-      /**
-       * @return Brightness values
-       */
-      get: function() {
-        return this._brightnesses;
-      },
-      /**
-       * An array of brightness values for each step.
-       *
-       * @param value  Brightness values
-       */
-      set: function(value) {
-        this._brightnesses = value;
-        this._lightnesses = [];
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(GradientModifier2.prototype, "opacities", {
-      /**
-       * @return Opacity values
-       */
-      get: function() {
-        return this._opacities;
-      },
-      /**
-       * An array of opacity values for each step.
-       *
-       * @param value  Opacity values
-       */
-      set: function(value) {
-        this._opacities = value;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(GradientModifier2.prototype, "offsets", {
-      /**
-       * @return Offsets
-       */
-      get: function() {
-        return this._offsets;
-      },
-      /**
-       * An array of relative position (0-1) for each step.
-       *
-       * If not set, all steps will be of equal relative length.
-       *
-       * @param value  Offsets
-       */
-      set: function(value) {
-        this._offsets = value;
-      },
-      enumerable: true,
-      configurable: true
-    });
-    GradientModifier2.prototype.modify = function(value) {
-      this.gradient.clear();
-      var count = 0;
-      if (this.opacities) {
-        count = max(count, this.opacities.length);
-      }
-      if (this.lightnesses) {
-        count = max(count, this.lightnesses.length);
-      }
-      if (this.brightnesses) {
-        count = max(count, this.brightnesses.length);
-      }
-      var opacity = 1, lightness, brightness;
-      for (var i = 0; i < count; i++) {
-        var color2 = value;
-        if (this.opacities && isNumber(this.opacities[i])) {
-          opacity = this.opacities[i];
-        }
-        if (this.lightnesses && isNumber(this.lightnesses[i])) {
-          lightness = this.lightnesses[i];
-          brightness = void 0;
-        }
-        if (this.brightnesses && isNumber(this.brightnesses[i])) {
-          brightness = this.brightnesses[i];
-          lightness = void 0;
-        }
-        if (isNumber(brightness)) {
-          color2 = value.brighten(this.brightnesses[i]);
-        } else if (isNumber(lightness)) {
-          color2 = value.lighten(this.lightnesses[i]);
-        }
-        var offset = this.offsets[i];
-        this.gradient.addColor(color2, opacity, offset);
-      }
-      return this.gradient;
-    };
-    GradientModifier2.prototype.copyFrom = function(source) {
-      _super.prototype.copyFrom.call(this, source);
-      this._offsets = source.offsets;
-      this._brightnesses = source.brightnesses;
-      this._lightnesses = source.lightnesses;
-      this._opacities = source.opacities;
-    };
-    return GradientModifier2;
-  }(ColorModifier)
-);
-registry.registeredClasses["GradientModifier"] = GradientModifier;
-
-// node_modules/@amcharts/amcharts4/.internal/core/rendering/fills/LinearGradientModifier.js
-var LinearGradientModifier = (
-  /** @class */
-  function(_super) {
-    __extends(LinearGradientModifier2, _super);
-    function LinearGradientModifier2() {
-      var _this = _super.call(this) || this;
-      _this.className = "LinearGradientModifier";
-      _this.gradient = new LinearGradient();
-      _this.applyTheme();
-      return _this;
-    }
-    LinearGradientModifier2.prototype.copyFrom = function(source) {
-      _super.prototype.copyFrom.call(this, source);
-      this.gradient = source.gradient.clone();
-    };
-    return LinearGradientModifier2;
-  }(GradientModifier)
-);
-registry.registeredClasses["LinearGradientModifier"] = LinearGradientModifier;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Polyspline.js
-var Polyspline = (
-  /** @class */
-  function(_super) {
-    __extends(Polyspline2, _super);
-    function Polyspline2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Polyspline";
-      _this.tensionX = 0.5;
-      _this.tensionY = 0.5;
-      _this.applyTheme();
-      return _this;
-    }
-    Polyspline2.prototype.makePath = function() {
-      this._distance = 0;
-      var segments = this.segments;
-      var tensionX = this.tensionX;
-      var tensionY = this.tensionY;
-      this.allPoints = [];
-      if (segments && segments.length > 0) {
-        var path = "";
-        this._realSegments = [];
-        for (var i = 0, len = segments.length; i < len; i++) {
-          var points = segments[i];
-          var realPoints = [];
-          this._realSegments.push(realPoints);
-          if (points.length > 0) {
-            var first = points[0];
-            var last = points[points.length - 1];
-            var closed_1 = false;
-            if (round(first.x, 3) == round(last.x) && round(first.y) == round(last.y)) {
-              closed_1 = true;
-            }
-            path += moveTo(points[0]);
-            for (var p = 0; p < points.length - 1; p++) {
-              var p0 = points[p - 1];
-              var p1 = points[p];
-              var p2 = points[p + 1];
-              var p3 = points[p + 2];
-              if (p === 0) {
-                p0 = points[p];
-              } else if (p == points.length - 2) {
-                p3 = points[p + 1];
-              }
-              if (!p3) {
-                p3 = p2;
-              }
-              if (p === 0) {
-                if (closed_1) {
-                  p0 = points[points.length - 2];
-                } else {
-                  p0 = points[i];
-                }
-              } else if (p == points.length - 2) {
-                if (closed_1) {
-                  p3 = points[1];
-                } else {
-                  p3 = points[p + 1];
-                }
-              }
-              var controlPointA = getCubicControlPointA(p0, p1, p2, p3, tensionX, tensionY);
-              var controlPointB = getCubicControlPointB(p0, p1, p2, p3, tensionX, tensionY);
-              path += cubicCurveTo(p2, controlPointA, controlPointB);
-              var stepCount = Math.ceil(getCubicCurveDistance(p1, p2, controlPointA, controlPointB, 20)) * 1.2;
-              var prevPoint = p1;
-              if (stepCount > 0) {
-                for (var s2 = 0; s2 <= stepCount; s2++) {
-                  var point = getPointOnCubicCurve(p1, p2, controlPointA, controlPointB, s2 / stepCount);
-                  if (point.x == prevPoint.x && point.y == prevPoint.y) {
-                    continue;
-                  }
-                  realPoints.push(point);
-                  var angle = round(getAngle(prevPoint, point), 5);
-                  this._distance += getDistance(prevPoint, point);
-                  this.allPoints[Math.floor(this._distance)] = {
-                    x: point.x,
-                    y: point.y,
-                    angle
-                  };
-                  prevPoint = point;
-                }
-              } else {
-                realPoints.push(p0);
-              }
-            }
-          }
-          var allPoints = this.allPoints;
-          if (allPoints.length > 1) {
-            for (var i_1 = 0; i_1 < allPoints.length; i_1++) {
-              if (!allPoints[i_1]) {
-                if (i_1 > 1) {
-                  allPoints[i_1] = allPoints[i_1 - 1];
-                } else {
-                  for (var k = 1; k < allPoints.length; k++) {
-                    if (allPoints[k]) {
-                      allPoints[i_1] = allPoints[k];
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        this.path = path;
-      }
-    };
-    Polyspline2.prototype.getClosestPointIndex = function(point) {
-      var points = this.allPoints;
-      var index;
-      var closest = Infinity;
-      if (points.length > 1) {
-        for (var p = 1; p < points.length; p++) {
-          var distance = getDistance(point, points[p]);
-          if (distance < closest) {
-            index = p;
-            closest = distance;
-          }
-        }
-      }
-      return index;
-    };
-    Object.defineProperty(Polyspline2.prototype, "tensionX", {
-      /**
-       * @return Tension
-       */
-      get: function() {
-        return this.getPropertyValue("tensionX");
-      },
-      /**
-       * Horizontal tension for the spline.
-       *
-       * Used by the line smoothing algorithm.
-       *
-       * @default 0.5
-       * @param value  Tension
-       */
-      set: function(value) {
-        this.setPropertyValue("tensionX", value);
-        this.makePath();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Polyspline2.prototype, "tensionY", {
-      /**
-       * @return Tension
-       */
-      get: function() {
-        return this.getPropertyValue("tensionY");
-      },
-      /**
-       * Vertical tension for the spline.
-       *
-       * Used by the line smoothing algorithm.
-       *
-       * @default 0.5
-       * @param value  Tensions
-       */
-      set: function(value) {
-        this.setPropertyValue("tensionY", value, true);
-        this.makePath();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Polyspline2.prototype.positionToPoint = function(position, extend) {
-      var deltaAngle = 0;
-      var allPoints = this.allPoints;
-      var len = allPoints.length;
-      if (!isNumber(position)) {
-        position = 0;
-      }
-      if (len > 1) {
-        if (extend && len > 3) {
-          if (position < 0) {
-            if (position < -0.01) {
-              position = -0.01;
-            }
-            var f0 = allPoints[0];
-            var f1 = allPoints[1];
-            var x = f0.x - (f0.x - f1.x) * len * position;
-            var y = f0.y - (f0.y - f1.y) * len * position;
-            return {
-              x,
-              y,
-              angle: getAngle(f0, f1)
-            };
-          } else if (position > 1) {
-            if (position > 1.01) {
-              position = 1.01;
-            }
-            var f0 = allPoints[allPoints.length - 2];
-            var f1 = allPoints[allPoints.length - 3];
-            var x = f0.x + (f0.x - f1.x) * len * (position - 1);
-            var y = f0.y + (f0.y - f1.y) * len * (position - 1);
-            return {
-              x,
-              y,
-              angle: getAngle(f0, {
-                x,
-                y
-              })
-            };
-          } else if (position == 1) {
-            var point_1 = allPoints[allPoints.length - 1];
-            return {
-              x: point_1.x,
-              y: point_1.y,
-              angle: point_1.angle
-            };
-          }
-        } else {
-          if (position < 0) {
-            position = Math.abs(position);
-            deltaAngle = 180;
-          }
-          if (position >= 1) {
-            position = 0.9999999999999;
-          }
-        }
-        var point = allPoints[Math.floor(position * len)];
-        return {
-          x: point.x,
-          y: point.y,
-          angle: point.angle + deltaAngle
-        };
-      } else if (len == 1) {
-        var point = allPoints[0];
-        return {
-          x: point.x,
-          y: point.y,
-          angle: point.angle
-        };
-      } else {
-        return {
-          x: 0,
-          y: 0,
-          angle: 0
-        };
-      }
-    };
-    return Polyspline2;
-  }(Polyline)
-);
-registry.registeredClasses["Polyspline"] = Polyspline;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/3d/Rectangle3D.js
-var Rectangle3D = (
-  /** @class */
-  function(_super) {
-    __extends(Rectangle3D2, _super);
-    function Rectangle3D2() {
-      var _this = _super.call(this) || this;
-      _this.angle = 30;
-      _this.depth = 30;
-      _this.className = "Rectangle3D";
-      _this.layout = "none";
-      var sideBack = _this.createChild(Sprite);
-      sideBack.shouldClone = false;
-      sideBack.setElement(_this.paper.add("path"));
-      sideBack.isMeasured = false;
-      _this.sideBack = sideBack;
-      _this._disposers.push(_this.sideBack);
-      var sideBottom = _this.createChild(Sprite);
-      sideBottom.shouldClone = false;
-      sideBottom.setElement(_this.paper.add("path"));
-      sideBottom.isMeasured = false;
-      _this.sideBottom = sideBottom;
-      _this._disposers.push(_this.sideBottom);
-      var sideLeft = _this.createChild(Sprite);
-      sideLeft.shouldClone = false;
-      sideLeft.setElement(_this.paper.add("path"));
-      sideLeft.isMeasured = false;
-      _this.sideLeft = sideLeft;
-      _this._disposers.push(_this.sideLeft);
-      var sideRight = _this.createChild(Sprite);
-      sideRight.shouldClone = false;
-      sideRight.setElement(_this.paper.add("path"));
-      sideRight.isMeasured = false;
-      _this.sideRight = sideRight;
-      _this._disposers.push(_this.sideRight);
-      var sideTop = _this.createChild(Sprite);
-      sideTop.shouldClone = false;
-      sideTop.setElement(_this.paper.add("path"));
-      sideTop.isMeasured = false;
-      _this.sideTop = sideTop;
-      _this._disposers.push(_this.sideTop);
-      var sideFront = _this.createChild(Sprite);
-      sideFront.shouldClone = false;
-      sideFront.setElement(_this.paper.add("path"));
-      sideFront.isMeasured = false;
-      _this.sideFront = sideFront;
-      _this._disposers.push(_this.sideFront);
-      _this.applyTheme();
-      return _this;
-    }
-    Rectangle3D2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      var w = this.innerWidth;
-      var h = this.innerHeight;
-      var depth = this.depth;
-      var angle = this.angle;
-      var sin2 = sin(angle);
-      var cos2 = cos(angle);
-      var a = {
-        x: 0,
-        y: 0
-      };
-      var b = {
-        x: w,
-        y: 0
-      };
-      var c = {
-        x: w,
-        y: h
-      };
-      var d = {
-        x: 0,
-        y: h
-      };
-      var ah = {
-        x: depth * cos2,
-        y: -depth * sin2
-      };
-      var bh = {
-        x: depth * cos2 + w,
-        y: -depth * sin2
-      };
-      var ch = {
-        x: depth * cos2 + w,
-        y: -depth * sin2 + h
-      };
-      var dh = {
-        x: depth * cos2,
-        y: -depth * sin2 + h
-      };
-      this.sideFront.path = moveTo(a) + lineTo(b) + lineTo(c) + lineTo(d) + closePath();
-      this.sideBack.path = moveTo(ah) + lineTo(bh) + lineTo(ch) + lineTo(dh) + closePath();
-      this.sideLeft.path = moveTo(a) + lineTo(ah) + lineTo(dh) + lineTo(d) + closePath();
-      this.sideRight.path = moveTo(b) + lineTo(bh) + lineTo(ch) + lineTo(c) + closePath();
-      this.sideBottom.path = moveTo(d) + lineTo(dh) + lineTo(ch) + lineTo(c) + closePath();
-      this.sideTop.path = moveTo(a) + lineTo(ah) + lineTo(bh) + lineTo(b) + closePath();
-    };
-    Object.defineProperty(Rectangle3D2.prototype, "depth", {
-      /**
-       * @return Depth (px)
-       */
-      get: function() {
-        return this.getPropertyValue("depth");
-      },
-      /**
-       * Depth (Z dimension) of the 3D rectangle in pixels.
-       *
-       * @default 30
-       * @param value  Depth (px)
-       */
-      set: function(value) {
-        this.setPropertyValue("depth", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Rectangle3D2.prototype, "angle", {
-      /**
-       * @return Angle
-       */
-      get: function() {
-        return this.getPropertyValue("angle");
-      },
-      /**
-       * Angle of the point of view to the 3D element. (0-360)
-       *
-       * @default 30
-       * @param value  Angle
-       */
-      set: function(value) {
-        this.setPropertyValue("angle", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Rectangle3D2.prototype.setFill = function(value) {
-      _super.prototype.setFill.call(this, value);
-      if (!isObject(value) || "r" in value) {
-        value = toColor(value);
-      }
-      var colorStr;
-      if (value instanceof Color) {
-        colorStr = value.hex;
-      } else if (value instanceof LinearGradient || value instanceof RadialGradient) {
-        colorStr = value.stops.getIndex(0).color.hex;
-      } else {
-        var filter = new LightenFilter();
-        filter.lightness = -0.2;
-        this.sideBack.filters.push(filter);
-        var filter2 = filter.clone();
-        filter2.lightness = -0.4;
-        this.sideLeft.filters.push(filter2);
-        var filter3 = filter.clone();
-        filter3.lightness = -0.2;
-        this.sideRight.filters.push(filter3);
-        var filter4 = filter.clone();
-        filter4.lightness = -0.1;
-        this.sideTop.filters.push(filter4);
-        var filter5 = filter.clone();
-        filter5.lightness = -0.5;
-        this.sideBottom.filters.push(filter5);
-      }
-      if (colorStr) {
-        this.sideBack.fill = color(colorStr).lighten(-0.2);
-        this.sideLeft.fill = color(colorStr).lighten(-0.4);
-        this.sideRight.fill = color(colorStr).lighten(-0.2);
-        this.sideTop.fill = color(colorStr).lighten(-0.1);
-        this.sideBottom.fill = color(colorStr).lighten(-0.5);
-      }
-    };
-    Rectangle3D2.prototype.copyFrom = function(source) {
-      _super.prototype.copyFrom.call(this, source);
-      this.sideBack.copyFrom(source.sideBack);
-      this.sideLeft.copyFrom(source.sideLeft);
-      this.sideRight.copyFrom(source.sideRight);
-      this.sideTop.copyFrom(source.sideTop);
-      this.sideBottom.copyFrom(source.sideBottom);
-    };
-    return Rectangle3D2;
-  }(Container)
-);
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Ellipse.js
-var Ellipse = (
-  /** @class */
-  function(_super) {
-    __extends(Ellipse2, _super);
-    function Ellipse2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Ellipse";
-      _this.element = _this.paper.add("ellipse");
-      _this.applyTheme();
-      return _this;
-    }
-    Ellipse2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      this.element.attr({
-        "rx": this.radius
-      });
-      this.element.attr({
-        "ry": this.radiusY
-      });
-    };
-    Object.defineProperty(Ellipse2.prototype, "radiusY", {
-      /**
-       * @return Vertical radius
-       */
-      get: function() {
-        return this.innerHeight / 2;
-      },
-      /**
-       * Vertical radius.
-       *
-       * It's a relative size to the `radius`.
-       *
-       * E.g. 0.8 will mean the height of the ellipsis will be 80% of it's
-       * horizontal radius.
-       *
-       * @param value  Vertical radius
-       */
-      set: function(value) {
-        this.height = value * 2;
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Ellipse2.prototype, "radius", {
-      /**
-       * @return Horizontal radius
-       */
-      get: function() {
-        return this.innerWidth / 2;
-      },
-      /**
-       * Horizontal radius.
-       *
-       * @param value  Horizontal radius
-       */
-      set: function(value) {
-        this.width = value * 2;
-        this.invalidate();
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return Ellipse2;
-  }(Circle)
-);
-registry.registeredClasses["Ellipse"] = Ellipse;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/3d/Cone.js
-var Cone = (
-  /** @class */
-  function(_super) {
-    __extends(Cone2, _super);
-    function Cone2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Cone";
-      _this.angle = 30;
-      _this.radius = percent(100);
-      _this.topRadius = percent(100);
-      _this.top = _this.createChild(Ellipse);
-      _this.top.shouldClone = false;
-      _this.bottom = _this.createChild(Ellipse);
-      _this.bottom.shouldClone = false;
-      _this.body = _this.createChild(Sprite);
-      _this.body.shouldClone = false;
-      _this.body.setElement(_this.paper.add("path"));
-      _this.layout = "none";
-      _this.bodyFillModifier = new LinearGradientModifier();
-      _this.bodyFillModifier.lightnesses = [0, -0.25, 0];
-      _this.body.fillModifier = _this.bodyFillModifier;
-      _this.applyTheme();
-      return _this;
-    }
-    Cone2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      copyProperties(this, this.top, visualProperties);
-      copyProperties(this, this.bottom, visualProperties);
-      copyProperties(this, this.body, visualProperties);
-      var w = this.innerWidth;
-      var h = this.innerHeight;
-      var bottom = this.bottom;
-      var top = this.top;
-      var angle = this.angle;
-      var radiusBase;
-      var dx;
-      var dy;
-      if (this.orientation == "horizontal") {
-        radiusBase = h / 2;
-        bottom.y = h / 2;
-        bottom.x = 0;
-        top.y = h / 2;
-        top.x = w;
-        dx = (90 - angle) / 90;
-        dy = 0;
-        this.bodyFillModifier.gradient.rotation = 90;
-      } else {
-        dx = 0;
-        dy = (90 - angle) / 90;
-        radiusBase = w / 2;
-        bottom.y = h;
-        bottom.x = w / 2;
-        top.x = w / 2;
-        this.bodyFillModifier.gradient.rotation = 0;
-      }
-      var radius = this.radius.value * radiusBase;
-      var topRadius = this.topRadius.value * radiusBase;
-      bottom.radius = radius - radius * dx;
-      bottom.radiusY = radius - radius * dy;
-      top.radius = topRadius - topRadius * dx;
-      top.radiusY = topRadius - topRadius * dy;
-      var path;
-      if (this.orientation == "horizontal") {
-        path = moveTo({
-          x: 0,
-          y: h / 2 - bottom.radiusY
-        }) + arcTo(-90, -180, bottom.radius, bottom.radiusY) + lineTo({
-          x: w,
-          y: h / 2 + top.radiusY
-        }) + arcTo(90, 180, top.radius, top.radiusY) + closePath();
-      } else {
-        path = moveTo({
-          x: w / 2 - top.radius,
-          y: 0
-        }) + arcTo(180, -180, top.radius, top.radiusY) + lineTo({
-          x: w / 2 + bottom.radius,
-          y: h
-        }) + arcTo(0, 180, bottom.radius, bottom.radiusY) + closePath();
-      }
-      this.body.path = path;
-    };
-    Object.defineProperty(Cone2.prototype, "angle", {
-      /**
-       * @return Angle
-       */
-      get: function() {
-        return this.getPropertyValue("angle");
-      },
-      /**
-       * Angle of the point of view to the 3D element. (0-360)
-       *
-       * @default 30
-       * @param value  Angle
-       */
-      set: function(value) {
-        this.setPropertyValue("angle", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Cone2.prototype, "radius", {
-      /**
-       * @return Bottom radius
-       */
-      get: function() {
-        return this.getPropertyValue("radius");
-      },
-      /**
-       * A relative radius of the cone's bottom (base).
-       *
-       * It is relevant to the inner width or height of the element.
-       *
-       * @default Percent(100)
-       * @param value  Bottom radius
-       */
-      set: function(value) {
-        this.setPropertyValue("radius", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Cone2.prototype, "topRadius", {
-      /**
-       * @return Top radius
-       */
-      get: function() {
-        return this.getPropertyValue("topRadius");
-      },
-      /**
-       * A relative radius of the cone's top (tip).
-       *
-       * It is relevant to the inner width or height of the element.
-       *
-       * @default Percent(0)
-       * @param value  Top radius
-       */
-      set: function(value) {
-        this.setPropertyValue("topRadius", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperty(Cone2.prototype, "orientation", {
-      /**
-       * Orientation
-       */
-      get: function() {
-        return this.getPropertyValue("orientation");
-      },
-      /**
-       * Orientation of the cone
-       *
-       * @default "vertical"
-       * @param value  Orientation
-       */
-      set: function(value) {
-        this.setPropertyValue("orientation", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return Cone2;
-  }(Container)
-);
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/TextLink.js
-var TextLink = (
-  /** @class */
-  function(_super) {
-    __extends(TextLink2, _super);
-    function TextLink2() {
-      var _this = _super.call(this) || this;
-      _this.className = "TextLink";
-      _this.selectable = true;
-      var interfaceColors = new InterfaceColorSet();
-      _this.fill = interfaceColors.getFor("primaryButton").brighten(0.3);
-      var hoverState = _this.states.create("hover");
-      hoverState.properties.fill = interfaceColors.getFor("primaryButtonHover").brighten(0.3);
-      var downState = _this.states.create("down");
-      downState.properties.fill = interfaceColors.getFor("primaryButtonDown").brighten(0.3);
-      _this.cursorOverStyle = MouseCursorStyle.pointer;
-      _this.applyTheme();
-      return _this;
-    }
-    return TextLink2;
-  }(Label)
-);
-registry.registeredClasses["TextLink"] = TextLink;
-
-// node_modules/@amcharts/amcharts4/.internal/core/elements/Triangle.js
-var Triangle = (
-  /** @class */
-  function(_super) {
-    __extends(Triangle2, _super);
-    function Triangle2() {
-      var _this = _super.call(this) || this;
-      _this.className = "Triangle";
-      _this.element = _this.paper.add("path");
-      _this.direction = "top";
-      _this.applyTheme();
-      return _this;
-    }
-    Triangle2.prototype.draw = function() {
-      _super.prototype.draw.call(this);
-      var w = this.pixelWidth;
-      var h = this.pixelHeight;
-      var path;
-      switch (this.direction) {
-        case "right":
-          path = moveTo({
-            x: 0,
-            y: 0
-          }) + lineTo({
-            x: w,
-            y: h / 2
-          }) + lineTo({
-            x: 0,
-            y: h
-          }) + closePath();
-          break;
-        case "left":
-          path = moveTo({
-            x: w,
-            y: 0
-          }) + lineTo({
-            x: 0,
-            y: h / 2
-          }) + lineTo({
-            x: w,
-            y: h
-          }) + closePath();
-          break;
-        case "bottom":
-          path = moveTo({
-            x: 0,
-            y: 0
-          }) + lineTo({
-            x: w,
-            y: 0
-          }) + lineTo({
-            x: w / 2,
-            y: h
-          }) + closePath();
-          break;
-        case "top":
-          path = moveTo({
-            x: w / 2,
-            y: 0
-          }) + lineTo({
-            x: w,
-            y: h
-          }) + lineTo({
-            x: 0,
-            y: h
-          }) + closePath();
-          break;
-      }
-      this.path = path;
-    };
-    Object.defineProperty(Triangle2.prototype, "direction", {
-      /**
-       * Returns direction of a triangle
-       *
-       * @return value
-       */
-      get: function() {
-        return this.getPropertyValue("direction");
-      },
-      /**
-       * Sets direction of a triangle
-       *
-       * @param value
-       */
-      set: function(value) {
-        this.setPropertyValue("direction", value, true);
-      },
-      enumerable: true,
-      configurable: true
-    });
-    return Triangle2;
-  }(Sprite)
-);
-registry.registeredClasses["Triangle"] = Triangle;
+registry.registeredClasses["ColorSet"] = ColorSet;
 
 export {
   IndexedIterable,
@@ -35688,9 +35688,6 @@ export {
   SpriteEventDispatcher,
   SVGDefaults,
   options,
-  warn,
-  System,
-  system,
   animate,
   AnimationDisposer,
   Animation,
@@ -35731,6 +35728,7 @@ export {
   getInteraction,
   Popup,
   Modal,
+  warn,
   svgContainers,
   SVGContainer,
   Paper,
@@ -35752,6 +35750,8 @@ export {
   Sprite,
   Rectangle,
   Container,
+  System,
+  system,
   DataParser,
   CSVParser,
   JSONParser,
@@ -35766,6 +35766,11 @@ export {
   Label,
   RoundedRectangle,
   Button,
+  Circle,
+  Ellipse,
+  Line,
+  PointedShape,
+  PointedRectangle,
   polyline,
   moveTo,
   lineTo,
@@ -35777,38 +35782,33 @@ export {
   rectangle,
   rectToPath,
   Path_exports,
-  PointedShape,
-  PointedRectangle,
+  Polyline,
+  Polyspline,
+  Slice,
+  ResizeButton,
+  Scrollbar,
+  TextLink,
   Filter,
   DropShadowFilter,
   Tooltip,
-  ResizeButton,
-  Scrollbar,
-  ColorSet,
-  Line,
+  Trapezoid,
+  Triangle,
   Tension,
   MonotoneX,
   MonotoneY,
   Basis,
+  WavedCircle,
   WavedLine,
   WavedRectangle,
   ZoomOutButton,
-  DesaturateFilter,
-  Circle,
-  WavedCircle,
-  Trapezoid,
-  Slice,
-  LightenFilter,
-  Slice3D,
-  Polyline,
   ColorModifier,
   GradientModifier,
   LinearGradientModifier,
-  Polyspline,
-  Rectangle3D,
-  Ellipse,
   Cone,
-  TextLink,
-  Triangle
+  LightenFilter,
+  Rectangle3D,
+  Slice3D,
+  DesaturateFilter,
+  ColorSet
 };
-//# sourceMappingURL=chunk-YK7OFSU6.js.map
+//# sourceMappingURL=chunk-2TEU6E74.js.map

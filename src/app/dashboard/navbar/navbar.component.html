@@ -1,9 +1,7 @@
 <nav *ngIf="navbarVisible" class="bg-[#2C6E4F] text-white p-4 flex justify-between items-center fixed top-0 w-full z-50 shadow-2xl rounded-b-lg">
-  <!-- Logo y enlaces principales -->
   <div class="flex items-center space-x-8">
     <a routerLink="/ejercicio1" class="ml-20 font-semibold text-lg transition-all duration-300 hover:text-[#A5D6A7]">Inicio</a>
-
-    <!-- Menú de Prácticas -->
+  
     <div class="relative group">
       <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
         Prácticas
@@ -15,7 +13,6 @@
       </div>
     </div>
 
-    <!-- Menú de Tareas -->
     <div class="relative group">
       <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
         Tareas
@@ -27,22 +24,20 @@
       </div>
     </div>
 
-    <!-- Examen Práctico -->
     <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
       Examen Práctico
     </button>
   </div>
 
-  <!-- Perfil Usuario -->
   <div class="relative group ml-10">
     <button class="flex items-center space-x-2 px-3 py-2 text-white font-semibold transition-all duration-300 hover:text-[#A5D6A7] focus:outline-none">
       <span>230362</span>
-      <img class="w-8 h-8 rounded-full border-2 border-[#A5D6A7]" src="/assets/IMG_9529.JPEG" alt="Imagen" />
+      <img class="w-8 h-8 rounded-full border-2 border-[#A5D6A7]" src="/assets/171446408.jpeg" alt="Imagen" />
     </button>
     <div class="absolute hidden group-hover:block bg-[#1B4D31] text-white mt-2 rounded-lg transition-all duration-200">
       <a class="block px-4 py-2 text-sm hover:bg-[#A5D6A7] transition-all duration-200">Perfil</a>
 
-      <button (click)="cerrarSesion()" class="bg-red-500 px-4 py-2 text-white rounded-md">Cerrar sesión</button>
+      <button class="px-4 py-2 text-white rounded-md">Cerrar sesión</button>
     </div>
   </div>
 </nav>

@@ -418,58 +418,6 @@ function keepIf(array, keep) {
   }
 }
 
-// node_modules/@amcharts/amcharts5/.internal/core/util/Object.js
-var Object_exports = {};
-__export(Object_exports, {
-  copy: () => copy2,
-  each: () => each2,
-  eachContinue: () => eachContinue2,
-  eachOrdered: () => eachOrdered,
-  hasKey: () => hasKey,
-  keys: () => keys,
-  keysOrdered: () => keysOrdered,
-  softCopyProperties: () => softCopyProperties
-});
-function keys(object) {
-  return Object.keys(object);
-}
-function keysOrdered(object, order) {
-  return keys(object).sort(order);
-}
-function copy2(object) {
-  return Object.assign({}, object);
-}
-function each2(object, f) {
-  keys(object).forEach((key) => {
-    f(key, object[key]);
-  });
-}
-function eachContinue2(object, fn) {
-  for (let key in object) {
-    if (hasKey(object, key)) {
-      if (!fn(key, object[key])) {
-        break;
-      }
-    }
-  }
-}
-function eachOrdered(object, fn, ord) {
-  each(keysOrdered(object, ord), (key) => {
-    fn(key, object[key]);
-  });
-}
-function hasKey(object, key) {
-  return {}.hasOwnProperty.call(object, key);
-}
-function softCopyProperties(source, target) {
-  each2(source, (key, value) => {
-    if (value != null && target[key] == null) {
-      target[key] = value;
-    }
-  });
-  return target;
-}
-
 // node_modules/@amcharts/amcharts5/.internal/core/util/Disposer.js
 var DisposerClass = class {
   /**
@@ -653,6 +601,58 @@ var CounterDisposer = class extends Disposer {
     });
   }
 };
+
+// node_modules/@amcharts/amcharts5/.internal/core/util/Object.js
+var Object_exports = {};
+__export(Object_exports, {
+  copy: () => copy2,
+  each: () => each2,
+  eachContinue: () => eachContinue2,
+  eachOrdered: () => eachOrdered,
+  hasKey: () => hasKey,
+  keys: () => keys,
+  keysOrdered: () => keysOrdered,
+  softCopyProperties: () => softCopyProperties
+});
+function keys(object) {
+  return Object.keys(object);
+}
+function keysOrdered(object, order) {
+  return keys(object).sort(order);
+}
+function copy2(object) {
+  return Object.assign({}, object);
+}
+function each2(object, f) {
+  keys(object).forEach((key) => {
+    f(key, object[key]);
+  });
+}
+function eachContinue2(object, fn) {
+  for (let key in object) {
+    if (hasKey(object, key)) {
+      if (!fn(key, object[key])) {
+        break;
+      }
+    }
+  }
+}
+function eachOrdered(object, fn, ord) {
+  each(keysOrdered(object, ord), (key) => {
+    fn(key, object[key]);
+  });
+}
+function hasKey(object, key) {
+  return {}.hasOwnProperty.call(object, key);
+}
+function softCopyProperties(source, target) {
+  each2(source, (key, value) => {
+    if (value != null && target[key] == null) {
+      target[key] = value;
+    }
+  });
+  return target;
+}
 
 // node_modules/@amcharts/amcharts5/.internal/core/util/EventDispatcher.js
 var EventDispatcher = class {
@@ -1514,6 +1514,15 @@ function compareArray(left, right, f) {
   }
   return compare(leftLength, rightLength);
 }
+function compareNumber(a, b) {
+  if (a === b) {
+    return 0;
+  } else if (a < b) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
 
 // node_modules/@amcharts/amcharts5/.internal/core/Theme.js
 var Theme = class {
@@ -1640,15 +1649,10 @@ export {
   removeIndex,
   find,
   findReverse,
+  getSortedIndex,
   getFirstSortedIndex,
   keepIf,
   Array_exports,
-  keys,
-  keysOrdered,
-  copy2,
-  each2,
-  eachContinue2,
-  Object_exports,
   DisposerClass,
   Disposer,
   ArrayDisposer,
@@ -1656,9 +1660,16 @@ export {
   MutableValueDisposer,
   CounterDisposer,
   EventDispatcher,
+  keys,
+  keysOrdered,
+  copy2,
+  each2,
+  eachContinue2,
+  Object_exports,
+  Template,
   compare,
   compareArray,
-  Template,
+  compareNumber,
   Theme
 };
-//# sourceMappingURL=chunk-UQME3NJK.js.map
+//# sourceMappingURL=chunk-EYNLZTNF.js.map
