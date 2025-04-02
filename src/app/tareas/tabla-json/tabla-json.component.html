@@ -1,0 +1,20 @@
+<table id="treesTable" class="display" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th>Common Name</th>
+      <th>Scientific Name</th>
+      <th>Image</th>
+      <th>Average Height (m)</th>
+      <th>Native Region</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let tree of trees">
+      <td>{{ tree.common_name }}</td>
+      <td>{{ tree.scientific_name }}</td>
+      <td><img [src]="tree.image_url" alt="{{ tree.common_name }}" width="50" style="max-height: 50px; object-fit: cover;"></td>
+      <td>{{ tree.average_height }}</td>
+      <td>{{ tree.native_region }}</td>
+    </tr>
+  </tbody>
+</table>

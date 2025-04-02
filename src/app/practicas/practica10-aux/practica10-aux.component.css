@@ -22,7 +22,7 @@ ul {
   li:hover {
     background-color: #f0f0f0;
     transform: translateX(10px);
-    color: #6A4C92;
+    color: #4c925e;
   }
   
   li:active {

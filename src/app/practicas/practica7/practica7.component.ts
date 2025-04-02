@@ -9,14 +9,14 @@ export class Practica7Component {
   message = '';
 
   onMouseOver() {
-    this.message = 'Los pulpos tienen tres corazones.';
+    this.message = 'Me llamo Brisa';
   }
 
   onMouseLeave() {
-    this.message = ''; // Resetea el mensaje cuando el mouse se va
+    this.message = ''; 
   }
 
   greet() {
-    console.log('Hola, cara de bola 👋');
+    console.log('Hola, me gusta Angular');
   }
 }

@@ -32,8 +32,14 @@ export class NavbarComponent {
     
   ];
   tareas=[
-    {nombre:'Tarea 1',link:"/tarea1"},
-    {nombre:'Tarea 2',link:"/tarea2"}
+    { nombre: 'Tabla basica', link: '/tabla-basic', ejercicio:'Tabla basica', objetivo:'Implementar una tabla simple con DataTables para visualizar datos estáticos en una estructura tabular.', descripcion:' Se crea una tabla HTML con DataTables para mejorar la presentación y organización de datos. No usa AJAX ni JSON, los datos están incrustados directamente en el HTML.', unidad:'Unidad 2', mostrarDescripcion: false }, 
+    { nombre: 'Tabla options', link: '/tabla-options', ejercicio:'Tabla options', objetivo:'Configurar opciones avanzadas en DataTables, como paginación, búsqueda y ordenamiento.', descripcion:'Se configura DataTables utilizando el objeto options para personalizar la presentación y el comportamiento de la tabla, habilitando características como filtrado y ordenación de columnas.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Tabla JSON', link: '/tabla-json', ejercicio:'Tabla JSON', objetivo:'Cargar datos en DataTables desde un archivo JSON externo.', descripcion:'Se usa la opción ajax de DataTables para obtener datos de un archivo JSON y mostrarlos dinámicamente en la tabla.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Tabla AJAX', link: '/tabla-ajax', ejercicio:'Tabla AJAX', objetivo:'Integrar DataTables con una API mediante AJAX para obtener datos dinámicamente.', descripcion:'Se utiliza ajax para realizar una solicitud a un servidor que devuelve datos en formato JSON. Esto permite que la tabla se actualice sin recargar la página.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Grafica basica', link: '/grafica-basic', ejercicio:'Grafica basica', objetivo:'Crear una gráfica simple con amCharts utilizando datos estáticos.', descripcion:'Se genera una gráfica de barras con datos definidos en el código, sin conexión a un JSON o API externa.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Grafica options', link: '/grafica-options', ejercicio:'Grafica Options', objetivo:'Configurar opciones avanzadas en amCharts, como animaciones, colores y estilos personalizados.', descripcion:'Se utilizan opciones personalizadas para modificar la apariencia y el comportamiento de la gráfica, como cambio de colores, efectos de animación y formatos de etiquetas.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Grafica JSON', link: '/grafica-json', ejercicio:'Grafica JSON', objetivo:'Cargar datos en una gráfica de amCharts desde un archivo JSON externo.', descripcion:'Se obtiene información desde un archivo JSON mediante fetch() y se usa para renderizar la gráfica dinámicamente.', unidad:'Unidad 2', mostrarDescripcion: false },
+    { nombre: 'Grafica AJAX', link: '/grafica-ajax', ejercicio:'Grafica AJAX', objetivo:'Obtener datos en tiempo real desde una API para generar una gráfica interactiva.', descripcion:'Se utiliza fetch() o AJAX para consultar una API y actualizar la gráfica en tiempo real sin necesidad de recargar la página.', unidad:'Unidad 2', mostrarDescripcion: false },
   ]
   
   constructor(private sidebarService: SidebarService, private router: Router) {}

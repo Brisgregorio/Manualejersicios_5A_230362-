@@ -1,18 +1,29 @@
-<div
-  *ngIf="sidebarVisible"
-  class="bg-white  text-gray-800 h-screen w-80 p-6 border-r border-gray-300 shadow-md overflow-y-auto"
->
-  <h2 class="text-2xl font-semibold mb-8">Prácticas de Angular</h2>
+<div *ngIf="sidebarVisible" class="bg-gradient-to-r from-green-500 to-teal-500 text-white h-screen w-80 p-8 border-r border-gray-300 shadow-lg overflow-y-auto">
+  <h2 class="text-3xl font-extrabold text-center mb-8">Prácticas de Angular</h2>
 
- 
-  <div *ngIf="practicaSeleccionada" class="bg-gray-100 text-gray-600 mt-2 p-3 rounded-lg shadow-inner transition-all duration-300">
-    <h5 class="text-lg font-semibold">Nombre:</h5>
-    <p>{{ practicaSeleccionada.ejercicio }}</p>
-    <h5 class="text-lg font-semibold">Objetivo:</h5>
-    <p>{{ practicaSeleccionada.objetivo }}</p>
-    <h5 class="text-lg font-semibold mt-4">Descripción:</h5>
-    <p>{{ practicaSeleccionada.descripcion }}</p>
-    <h5 class="text-lg font-semibold mt-4">Unidad:</h5>
-    <p>{{ practicaSeleccionada.unidad }}</p>
+  <div *ngIf="practicaSeleccionada" class="space-y-8">
+    <!-- Tarjeta para Nombre -->
+    <div class="bg-white p-6 rounded-2xl shadow-xl transition-transform transform hover:scale-105">
+      <h5 class="text-xl font-bold text-green-800">Nombre:</h5>
+      <p class="text-lg text-gray-700">{{ practicaSeleccionada.ejercicio }}</p>
+    </div>
+
+    <!-- Tarjeta para Objetivo -->
+    <div class="bg-white p-6 rounded-2xl shadow-xl transition-transform transform hover:scale-105">
+      <h5 class="text-xl font-bold text-green-800">Objetivo:</h5>
+      <p class="text-lg text-gray-700">{{ practicaSeleccionada.objetivo }}</p>
+    </div>
+
+    <!-- Tarjeta para Descripción -->
+    <div class="bg-white p-6 rounded-2xl shadow-xl transition-transform transform hover:scale-105">
+      <h5 class="text-xl font-bold text-green-800">Descripción:</h5>
+      <p class="text-lg text-gray-700">{{ practicaSeleccionada.descripcion }}</p>
+    </div>
+
+    <!-- Tarjeta para Unidad -->
+    <div class="bg-white p-6 rounded-2xl shadow-xl transition-transform transform hover:scale-105">
+      <h5 class="text-xl font-bold text-green-800">Unidad:</h5>
+      <p class="text-lg text-gray-700">{{ practicaSeleccionada.unidad }}</p>
+    </div>
   </div>
 </div>

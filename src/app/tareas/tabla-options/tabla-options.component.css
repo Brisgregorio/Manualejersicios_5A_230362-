@@ -1,0 +1,41 @@
+.container {
+  width: 80%;
+  margin: 0 auto;
+  padding-top: 50px;
+}
+
+#arbolesTable {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  margin: 20px 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#arbolesTable th, #arbolesTable td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+#arbolesTable th {
+  background-color: #80CBC4;
+  color: #ffffff;
+}
+
+#arbolesTable td img {
+  width: 50px;
+  height: auto;
+  border-radius: 5px;
+}
+
+#arbolesTable tr:hover {
+  background-color: #f1f1f1;
+}
+
+@media (max-width: 768px) {
+  #arbolesTable {
+    font-size: 14px;
+  }
+}
+  

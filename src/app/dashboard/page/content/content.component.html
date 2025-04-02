@@ -1,15 +1,17 @@
-<div class="flex flex-col min-h-screen bg-[#F1E6FF] relative">
+<div class="flex flex-col min-h-screen bg-[#E8F5E9] relative">
 
-  <div class="overflow-y-auto z-30 bg-gradient-to-r from-[#6A4C92] to-[#4B2E83] p-3 rounded-lg shadow-md">
+  <!-- Barra de navegación con gradiente -->
+  <div class="overflow-y-auto z-30 bg-gradient-to-r from-[#4CAF50] to-[#388E3C] p-4 rounded-lg shadow-2xl">
     <app-breadcrumb></app-breadcrumb>
   </div>
 
-
-  <div class="flex-grow m-6 p-8 bg-white shadow-xl rounded-lg overflow-y-auto z-40">
+  <!-- Contenido principal -->
+  <div class="flex-grow m-6 p-8 bg-white shadow-2xl rounded-lg overflow-y-auto z-40">
     <router-outlet></router-outlet>
   </div>
 
-  <app-footer class="h-40 w-full bg-gradient-to-r from-[#6A4C92] to-[#4B2E83] text-white shadow-lg flex items-center justify-center mt-auto">
-    <p class="text-center">© 2025 </p>
+  <!-- Pie de página con gradiente -->
+  <app-footer class="h-40 w-full bg-gradient-to-r from-[#4CAF50] to-[#388E3C] text-white shadow-2xl flex items-center justify-center mt-auto">
+    <p class="text-center text-lg font-semibold">© 2025</p>
   </app-footer>
 </div>

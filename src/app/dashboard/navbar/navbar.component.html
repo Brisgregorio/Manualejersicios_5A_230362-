@@ -1,48 +1,46 @@
-<nav *ngIf="navbarVisible" class="bg-[#6A4C92] text-[#FFFFFF] p-4 flex justify-center items-center fixed top-0 w-full z-50 shadow-lg">
-  <div class="flex items-center space-x-6">
-    <!-- Inicio -->
-    <button class="px-6 py-2 border-2 border-transparent hover:border-[#9B59B6] hover:text-[#c4c4c4] rounded-lg transition-all duration-200 focus:outline-none text-center">
-      <a routerLink="/ejercicio1">Inicio</a>
-    </button>
+<nav *ngIf="navbarVisible" class="bg-[#2C6E4F] text-white p-4 flex justify-between items-center fixed top-0 w-full z-50 shadow-2xl rounded-b-lg">
+  <!-- Logo y enlaces principales -->
+  <div class="flex items-center space-x-8">
+    <a routerLink="/ejercicio1" class="ml-20 font-semibold text-lg transition-all duration-300 hover:text-[#A5D6A7]">Inicio</a>
 
-    <!-- Menú Prácticas -->
+    <!-- Menú de Prácticas -->
     <div class="relative group">
-      <button class="px-6 py-2 border-2 border-transparent hover:border-[#9B59B6] hover:text-[#c4c4c4] rounded-lg transition-all duration-200 focus:outline-none text-center">
+      <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
         Prácticas
       </button>
-      <div class="absolute hidden group-hover:block bg-[#5D3F7E] text-[#FFFFFF] mt-2 rounded-md w-max transition-all duration-300 delay-300">
-        <a *ngFor="let practica of practicas; let i = index" class="block px-4 py-2 text-sm hover:bg-[#6A4C92] transition-all duration-200" [routerLink]="practica.link" (click)="mostrarSidebar(practica)">
+      <div class="absolute hidden group-hover:block bg-[#1B4D31] text-white mt-2 rounded-lg transition-all duration-200">
+        <a *ngFor="let practica of practicas" class="block px-4 py-2 text-sm hover:bg-[#A5D6A7] transition-all duration-200" [routerLink]="practica.link" (click)="mostrarSidebar(practica)">
           {{ practica.nombre }}
         </a>
       </div>
     </div>
 
-    <!-- Menú Tareas -->
+    <!-- Menú de Tareas -->
     <div class="relative group">
-      <button class="px-6 py-2 border-2 border-transparent hover:border-[#9B59B6] hover:text-[#c4c4c4] rounded-lg transition-all duration-200 focus:outline-none text-center">
+      <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
         Tareas
       </button>
-      <div class="absolute hidden group-hover:block bg-[#5D3F7E] text-[#FFFFFF] mt-2 rounded-md w-max transition-all duration-300 delay-300">
-        <a *ngFor="let tarea of tareas; let i = index" class="block px-4 py-2 text-sm hover:bg-[#6A4C92] transition-all duration-200" [routerLink]="tarea.link">
+      <div class="absolute hidden group-hover:block bg-[#1B4D31] text-white mt-2 rounded-lg transition-all duration-200">
+        <a *ngFor="let tarea of tareas" class="block px-4 py-2 text-sm hover:bg-[#A5D6A7] transition-all duration-200" [routerLink]="tarea.link">
           {{ tarea.nombre }}
         </a>
       </div>
     </div>
 
     <!-- Examen Práctico -->
-    <button class="px-6 py-2 border-2 border-transparent hover:border-[#9B59B6] hover:text-[#c4c4c4] rounded-lg transition-all duration-200 focus:outline-none text-center">
+    <button class="text-white font-semibold px-6 py-2 rounded-lg transition-all duration-300 hover:bg-[#A5D6A7] focus:outline-none">
       Examen Práctico
     </button>
   </div>
 
   <!-- Perfil Usuario -->
-  <div class="relative group ml-8">
-    <button class="flex items-center space-x-2 px-3 py-2 hover:text-[#c4c4c4] transition-all duration-200 focus:outline-none">
+  <div class="relative group ml-10">
+    <button class="flex items-center space-x-2 px-3 py-2 text-white font-semibold transition-all duration-300 hover:text-[#A5D6A7] focus:outline-none">
       <span>230362</span>
-      <img class="w-8 h-8 rounded-full border-2 border-[#5D3F7E]" src="/assets/IMG_9529.JPEG" alt="Imagen" />
+      <img class="w-8 h-8 rounded-full border-2 border-[#A5D6A7]" src="/assets/IMG_9529.JPEG" alt="Imagen" />
     </button>
-    <div class="absolute hidden group-hover:block bg-[#5D3F7E] text-[#FFFFFF] mt-2 rounded-md w-max transition-all duration-300 delay-200">
-      <a class="block px-4 py-2 text-sm hover:bg-[#6A4C92] transition-all duration-200">Perfil</a>
+    <div class="absolute hidden group-hover:block bg-[#1B4D31] text-white mt-2 rounded-lg transition-all duration-200">
+      <a class="block px-4 py-2 text-sm hover:bg-[#A5D6A7] transition-all duration-200">Perfil</a>
 
       <button (click)="cerrarSesion()" class="bg-red-500 px-4 py-2 text-white rounded-md">Cerrar sesión</button>
     </div>

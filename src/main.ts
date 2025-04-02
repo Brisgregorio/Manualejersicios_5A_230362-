@@ -17,16 +17,14 @@ import { Practica9Component } from './app/practicas/practica9/practica9.componen
 import { Practica10Component } from './app/practicas/practica10/practica10.component';
 import { Practica11Component } from './app/practicas/practica11/practica11.component';
 import { Practica12Component } from './app/practicas/practica12/practica12.component';
-import { Tarea1Component } from './app/tareas/tarea1/tarea1.component';
-import { Tarea2Component } from './app/tareas/tarea2/tarea2.component';
-import { TablaOptionsComponent } from './app/tareas/tarea1/tabla-options/tabla-options.component';
-import { TablaAjaxComponent } from './app/tareas/tarea1/tabla-ajax/tabla-ajax.component';
-import { TablaBasicComponent } from './app/tareas/tarea1/tabla-basic/tabla-basic.component';
-import { TablaJsonComponent } from './app/tareas/tarea1/tabla-json/tabla-json.component';
-import { GraficaBasicComponent } from './app/tareas/tarea2/grafica-basic/grafica-basic.component';
+import { TablaOptionsComponent } from './app/tareas/tabla-options/tabla-options.component';
+import { TablaAjaxComponent } from './app/tareas/tabla-ajax/tabla-ajax.component';
+import { TablaBasicComponent } from './app/tareas/tabla-basic/tabla-basic.component';
+import { TablaJsonComponent } from './app/tareas/tabla-json/tabla-json.component';
+import { GraficaBasicComponent } from './app/tareas/grafica-basic/grafica-basic.component';
 import { GraficaOptionsComponent } from './app/tareas/tarea2/grafica-options/grafica-options.component';
-import { GraficaJsonComponent } from './app/tareas/tarea2/grafica-json/grafica-json.component';
-import { GraficaAjaxComponent } from './app/tareas/tarea2/grafica-ajax/grafica-ajax.component';
+import { GraficaJsonComponent } from './app/tareas/grafica-json/grafica-json.component';
+import { GraficaAjaxComponent } from './app/tareas/grafica-ajax/grafica-ajax.component';
 
 const routes: Routes = [
   { path: 'page1', component: Page1Component },
@@ -42,8 +40,6 @@ const routes: Routes = [
   { path: 'practica10', component: Practica10Component },
   { path: 'practica11', component: Practica11Component },
   { path: 'practica12', component: Practica12Component },
-  { path: 'tarea1', component: Tarea1Component },
-  { path: 'tarea2', component: Tarea2Component },
   { path: 'tabla-basic', component: TablaBasicComponent },
   { path: 'tabla-options', component: TablaOptionsComponent },
   { path: 'tabla-ajax', component: TablaAjaxComponent },
@@ -52,7 +48,7 @@ const routes: Routes = [
   {path:'grafica-options',component:GraficaOptionsComponent},
   {path:'grafica-ajax',component:GraficaAjaxComponent},
   {path:'grafica-json',component:GraficaJsonComponent},
-  { path: '**', redirectTo: 'page1' }, 
+    { path: '**', redirectTo: 'page1' }, 
 ];
 
 bootstrapApplication(AppComponent, {

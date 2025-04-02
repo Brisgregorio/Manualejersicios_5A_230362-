@@ -12,13 +12,13 @@ div[contentEditable="true"] {
 div[contentEditable="false"] {
   background-color: #fff; 
   border: 2px solid #e0e0e0; 
-  color: #888; 
+  color: #bebaba; 
 }
 
 
 div[contentEditable="true"]:focus {
-  background-color: #f8e6ff; 
-  border-color: #653da0; 
+  background-color: #e6ffe9; 
+  border-color: #165338; 
   outline: none;
 }
 

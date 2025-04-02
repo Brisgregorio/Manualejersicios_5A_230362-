@@ -2,7 +2,7 @@
   padding: 10px 20px;
   font-size: 1rem;
   color: #fff;
-  background-color: #6A4C92; 
+  background-color: #4c9251; 
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -13,7 +13,7 @@
 }
 
 .btn:hover {
-  background-color: #4B2E83; 
+  background-color: #2e832e; 
   transform: translateY(-3px); 
 }
 
