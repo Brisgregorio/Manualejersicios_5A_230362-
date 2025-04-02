@@ -22,7 +22,7 @@ import { TablaAjaxComponent } from './app/tareas/tabla-ajax/tabla-ajax.component
 import { TablaBasicComponent } from './app/tareas/tabla-basic/tabla-basic.component';
 import { TablaJsonComponent } from './app/tareas/tabla-json/tabla-json.component';
 import { GraficaBasicComponent } from './app/tareas/grafica-basic/grafica-basic.component';
-import { GraficaOptionsComponent } from './app/tareas/tarea2/grafica-options/grafica-options.component';
+import { GraficaOptionsComponent } from './app/tareas/grafica-options/grafica-options.component';
 import { GraficaJsonComponent } from './app/tareas/grafica-json/grafica-json.component';
 import { GraficaAjaxComponent } from './app/tareas/grafica-ajax/grafica-ajax.component';
 
