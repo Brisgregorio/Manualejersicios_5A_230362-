@@ -18,63 +18,63 @@ export class TablaJsonComponent implements OnInit {
       scientific_name: "Quercus robur",
       average_height: 25,
       native_region: "Northern Hemisphere",
-      image_url: "assets/oak.png"
+      image_url: "assets/OIP.jpeg"
     },
     {
       common_name: "Pine",
       scientific_name: "Pinus sylvestris",
       average_height: 30,
       native_region: "Northern Hemisphere",
-      image_url: "assets/pine.png"
+      image_url: "assets/OIP (1).jpeg"
     },
     {
       common_name: "Maple",
       scientific_name: "Acer saccharum",
       average_height: 15,
       native_region: "North America",
-      image_url: "assets/maple.png"
+      image_url: "assets/OIP.jpeg"
     },
     {
       common_name: "Birch",
       scientific_name: "Betula pendula",
       average_height: 20,
       native_region: "Europe and Asia",
-      image_url: "assets/birch.png"
+      image_url: "assets/OIP.jpeg"
     },
     {
       common_name: "Redwood",
       scientific_name: "Sequoia sempervirens",
       average_height: 115,
       native_region: "California, USA",
-      image_url: "assets/redwood.png"
+      image_url: "assets/descargar.jpeg"
     },
     {
       common_name: "Baobab",
       scientific_name: "Adansonia digitata",
       average_height: 30,
       native_region: "Africa",
-      image_url: "assets/baobab.png"
+      image_url: "assets/descargar (1).jpeg"
     },
     {
       common_name: "Cherry",
       scientific_name: "Prunus avium",
       average_height: 10,
       native_region: "Europe and Asia",
-      image_url: "assets/cherry.png"
+      image_url: "assets/descargar (2).jpeg"
     },
     {
       common_name: "Cedar",
       scientific_name: "Cedrus libani",
       average_height: 30,
       native_region: "Mediterranean region",
-      image_url: "assets/cedar.png"
+      image_url: "assets/descargar (2).jpeg"
     },
     {
       common_name: "Willow",
       scientific_name: "Salix alba",
       average_height: 20,
       native_region: "Northern Hemisphere",
-      image_url: "assets/willow.png"
+      image_url: "assets/descargar (3).jpeg"
     }
   ];
 
