@@ -43,14 +43,11 @@ export class NavbarComponent {
   ]
   
   constructor(private sidebarService: SidebarService, private router: Router) {}
-  
-
 
   mostrarSidebar(practica: any): void {
     this.sidebarService.setSidebarState(true, practica);
   }
-  navbarVisible: boolean = true; // Controla la visibilidad del navbar
-  
+  navbarVisible: boolean = true;  
 
   cerrarSesion() {
     this.navbarVisible = true;
